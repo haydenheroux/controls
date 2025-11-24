@@ -6,6 +6,13 @@
 
 namespace reefscape {
 
+struct TrapezoidTrajectoryDurations {
+  quantities::Time acceleration_duration;
+  quantities::Time cruise_duration;
+  quantities::Time deceleration_duration;
+  quantities::Time total_duration;
+};
+
 template <typename NativeUnit>
 struct TrapezoidTrajectory {
   au::QuantityD<units::Velocity<NativeUnit>> max_velocity;
@@ -17,20 +24,10 @@ struct TrapezoidTrajectory {
       : max_velocity(MaximumVelocity<System, NativeUnit>(system)),
         max_acceleration(MaximumAcceleration<System, NativeUnit>(system)) {}
 
-  // TODO(hayden): Generate trajectories in NativeUnit
-  PositionVelocityState Calculate(quantities::Time time_step,
-                                  PositionVelocityState state,
-                                  PositionVelocityState goal) {
-    // NOTE(hayden): Algorithm assumes positive motion
-    bool flip = goal.Position() < state.Position();
-    if (flip) {
-      state = state * -1.0;
-      goal = goal * -1.0;
-    }
-
-    if (state.Velocity() > max_velocity) {
-      state.SetVelocity(max_velocity);
-    }
+  TrapezoidTrajectoryDurations Durations(PositionVelocityState state,
+                                         PositionVelocityState goal) {
+    // TODO Verify that the calculated durations are correct
+    TrapezoidTrajectoryDurations durations;
 
     auto start_time = state.Velocity() / max_acceleration;
     auto start_distance = 0.5 * start_time * start_time * max_acceleration;
@@ -47,26 +44,47 @@ struct TrapezoidTrajectory {
       acceleration_time = au::sqrt(distance / max_acceleration);
       cruise_distance = au::meters(0);
     }
-    auto end_acceleration = acceleration_time - start_time;
-    auto end_cruise = end_acceleration + cruise_distance / max_velocity;
-    auto end_deceleration = end_cruise + acceleration_time - end_time;
+
+    durations.acceleration_duration = acceleration_time - start_time;
+    durations.cruise_duration = cruise_distance / max_velocity;
+    durations.deceleration_duration = acceleration_time - end_time;
+    durations.total_duration = durations.acceleration_duration + durations.cruise_duration + durations.deceleration_duration;
+    return durations;
+  }
+
+  // TODO(hayden): Generate trajectories in NativeUnit
+  PositionVelocityState Calculate(quantities::Time time_step,
+                                  PositionVelocityState state,
+                                  PositionVelocityState goal) {
+    // NOTE(hayden): Algorithm assumes positive motion
+    bool flip = goal.Position() < state.Position();
+    if (flip) {
+      state.vector = -1 * state.vector;
+      goal.vector = -1 * goal.vector;
+    }
+
+    if (state.Velocity() > max_velocity) {
+      state.SetVelocity(max_velocity);
+    }
 
     PositionVelocityState result{state};
 
-    if (time_step < end_acceleration) {
+    TrapezoidTrajectoryDurations durations = Durations(state, goal);
+
+    if (time_step < durations.acceleration_duration) {
       result.SetPosition(
           result.Position() +
           (state.Velocity() + 0.5 * time_step * max_acceleration) * time_step);
       result.SetVelocity(result.Velocity() + time_step * max_acceleration);
-    } else if (time_step <= end_cruise) {
+    } else if (time_step <= durations.acceleration_duration + durations.cruise_duration) {
       result.SetPosition(
           state.Position() +
-          (state.Velocity() + 0.5 * end_acceleration * max_acceleration) *
-              end_acceleration +
-          max_velocity * (time_step - end_acceleration));
+          (state.Velocity() + 0.5 * durations.acceleration_duration * max_acceleration) *
+              durations.acceleration_duration +
+          max_velocity * (time_step - durations.acceleration_duration));
       result.SetVelocity(max_velocity);
-    } else if (time_step <= end_deceleration) {
-      auto time_left = end_deceleration - time_step;
+    } else if (time_step <= durations.total_duration) {
+      auto time_left = durations.total_duration - time_step;
       result.SetPosition(
           goal.Position() -
           time_left * (goal.Velocity() + 0.5 * time_left * max_acceleration));

@@ -12,7 +12,7 @@ function(setup_dependencies)
     endif()
 
     if (NOT TARGET Eigen3::Eigen)
-        find_package(Eigen3 5.0.0 REQUIRED NO_MODULE)
+        find_package(Eigen3 5.0.1 REQUIRED NO_MODULE)
     endif()
 
     if (NOT TARGET raylib)

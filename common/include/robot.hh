@@ -2,8 +2,10 @@
 
 #include <string_view>
 
+#include "Motor.hh"
 #include "au/math.hh"
 #include "au/units/inches.hh"
+#include "au/units/pounds_mass.hh"
 #include "units.hh"
 
 namespace reefscape {
@@ -60,8 +62,15 @@ const Displacement kCarriageTravel =
 const Displacement kCarriageInnerWidth = au::inches(15.0);
 const Displacement kCarriageHeight = au::inches(6.0);
 
-const Displacement kTotalTravel =
+// TODO(hayden): Move quantity makers to separate namespace?
+const GearRatio GEAR_RATIO = units::gear_ratio(5);
+// TODO(hayden): Make a conversion factor from angular to linear
+const Displacement DRUM_RADIUS = 0.5 * au::inches(1.273);
+const Mass MASS = au::pounds_mass(30);
+const quantities::Current MAX_CURRENT = au::amperes(120);
+const Displacement TOTAL_TRAVEL =
     kStageTwoTravel + kStageThreeTravel + kCarriageTravel;
+const Motor MOTORS = Motor::KrakenX60() * 2;
 
 const std::string_view kElevatorPositionKey = "/elevator/position";
 const std::string_view kElevatorVelocityKey = "/elevator/velocity";

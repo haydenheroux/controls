@@ -229,7 +229,7 @@ void DrawRobot(Displacement elevator_position) {
   stage_one_origin.y += kStageOneToFrame.in(raylib_units);
   DrawStageOne(stage_one_origin);
 
-  double elevator_percent = elevator_position / kTotalTravel;
+  double elevator_percent = elevator_position / TOTAL_TRAVEL;
 
   Vector3 stage_two_origin = stage_one_origin;
   stage_two_origin.y +=

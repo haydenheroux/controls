@@ -1,11 +1,10 @@
+#include <iostream>
 #include "AffineSystemSim.hh"
 #include "Elevator.hh"
 #include "Motor.hh"
 #include "MotorSystem.hh"
 #include "Loop.hh"
-#include "au/units/amperes.hh"
-#include "au/units/inches.hh"
-#include "au/units/pounds_mass.hh"
+#include "au/io.hh"
 #include "au/units/volts.hh"
 #include "pubsub.hh"
 #include "robot.hh"
@@ -17,11 +16,7 @@ using State = PositionVelocityState;
 using Input = VoltageInput;
 
 int main() {
-  // TODO(hayden): Make a fluent API for creating mechanisms?
-  // TODO(hayden): Move quantity makers to separate namespace?
-  Elevator elevator{units::gear_ratio(5), 0.5 * au::inches(1.273),
-                    au::pounds_mass(30),  au::amperes(120),
-                    kTotalTravel,         Motor::KrakenX60FOC() * 2};
+  Elevator elevator{GEAR_RATIO, DRUM_RADIUS, MASS, MAX_CURRENT, TOTAL_TRAVEL, MOTORS};
 
   const auto kTimeStep = au::milli(au::seconds)(1);
   Loop loop{kTimeStep};
@@ -39,11 +34,18 @@ int main() {
   K << kP.in(au::volts / au::meter),
       kD.in(au::volts / (au::meters / au::second));
 
+  State top{TOTAL_TRAVEL};
+  State bottom{au::meters(0)};
+
   // TODO(hayden): Determine if it is possible to avoid explicit declaration
   TrapezoidTrajectory<units::DisplacementUnit> profile{elevator};
+  TrapezoidTrajectoryDurations bottom_to_top = profile.Durations(bottom, top);
 
-  State top{kTotalTravel};
-  State bottom{au::meters(0)};
+  std::cout << "Max velocity: " << profile.max_velocity << std::endl;
+  std::cout << "Max acceleration: " << profile.max_acceleration << std::endl;
+  std::cout << "Bottom: " << bottom.Position() << std::endl;
+  std::cout << "Top: " << top.Position() << std::endl;
+  std::cout << "Bottom to top timing: " << bottom_to_top.total_duration << std::endl;
 
   State reference = bottom;
   State goal = top;
