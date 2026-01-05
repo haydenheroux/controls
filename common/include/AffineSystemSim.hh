@@ -9,7 +9,7 @@ namespace reefscape {
 using namespace quantities;
 
 template <class StateType, class InputType>
-  requires HasDimension<StateType> && HasDimension<InputType>
+  requires SupportsVectorOperations<StateType> && SupportsVectorOperations<InputType>
 class AffineSystemSim {
   static constexpr int States = StateType::Dimension;
   static constexpr int Inputs = InputType::Dimension;
@@ -44,8 +44,6 @@ class AffineSystemSim {
             time_step) {}
 
   void Update(InputType input) {
-    // TODO(hayden): Add `.vector` type constraint for `InputType` or make
-    // `InputType` transparent
     input_ = input.vector;
     state_ = discrete_system_ * state_ + discrete_input_ * input_ +
              discrete_constant_;
@@ -54,8 +52,6 @@ class AffineSystemSim {
   StateType State() const { return StateType{state_}; }
 
   void SetState(StateType state) {
-    // TODO(hayden): Add `vector` type constraint for `StateType` or make
-    // `StateType` transparent
     state_ = state.vector;
   }
 

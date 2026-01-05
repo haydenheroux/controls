@@ -8,8 +8,7 @@ namespace reefscape {
 
 using namespace quantities;
 
-struct PositionVelocityState {
-  static const int Dimension = 2;
+struct PositionVelocityState : public VectorBase<PositionVelocityState, 2> {
   StateVector<Dimension> vector;
 
   PositionVelocityState(Displacement position, LinearVelocity velocity) {
@@ -34,29 +33,18 @@ struct PositionVelocityState {
   }
 
   Displacement Position() const { return au::meters(vector[0]); }
+  LinearVelocity Velocity() const { return (au::meters / au::second)(vector[1]); }
 
-  LinearVelocity Velocity() const {
-    return (au::meters / au::second)(vector[1]);
-  }
+  void SetPosition(Displacement position) { vector[0] = position.in(au::meters); }
+  void SetVelocity(LinearVelocity velocity) { vector[1] = velocity.in(au::meters / au::second); }
 
-  void SetPosition(Displacement position) {
-    vector[0] = position.in(au::meters);
-  }
-
-  void SetVelocity(LinearVelocity velocity) {
-    vector[1] = velocity.in(au::meters / au::second);
-  }
-
-  PositionVelocityState PositionClamped(Displacement min,
-                                        Displacement max) const {
+  PositionVelocityState PositionClamped(Displacement min, Displacement max) const {
     auto position = Position();
-
     if (position > max) {
       return {max, Velocity()};
     } else if (position < min) {
       return {min, Velocity()};
     }
-
     return *this;
   }
 

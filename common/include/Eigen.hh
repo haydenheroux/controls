@@ -13,6 +13,75 @@ concept HasDimension = requires {
   { T::Dimension };
 };
 
+template <typename T>
+concept SupportsVectorOperations = HasDimension<T> && requires(T a, T b, double scalar, const Eigen::Vector<double, T::Dimension>& vec) {
+  { a + b } -> std::convertible_to<T>;
+  { a - b } -> std::convertible_to<T>;
+  { a + vec } -> std::convertible_to<T>;
+  { a - vec } -> std::convertible_to<T>;
+  { scalar * a } -> std::convertible_to<T>;
+  { a * scalar } -> std::convertible_to<T>;
+};
+
+template <typename Derived, int Dim>
+class VectorBase {
+ public:
+  static constexpr int Dimension = Dim;
+
+ protected:
+  Eigen::Vector<double, Dim>& GetVector() {
+    return static_cast<Derived*>(this)->vector;
+  }
+  const Eigen::Vector<double, Dim>& GetVector() const {
+    return static_cast<const Derived*>(this)->vector;
+  }
+
+ public:
+  Derived operator+(const Derived& other) const {
+    Derived result = *static_cast<const Derived*>(this);
+    result.GetVector() = GetVector() + other.GetVector();
+    return result;
+  }
+
+  Derived operator-(const Derived& other) const {
+    Derived result = *static_cast<const Derived*>(this);
+    result.GetVector() = GetVector() - other.GetVector();
+    return result;
+  }
+
+  Derived operator*(double scalar) const {
+    Derived result = *static_cast<const Derived*>(this);
+    result.GetVector() = GetVector() * scalar;
+    return result;
+  }
+
+  friend Derived operator*(double scalar, const Derived& derived) {
+    return derived * scalar;
+  }
+
+  Derived operator+(const Eigen::Vector<double, Dim>& vec) const {
+    Derived result = *static_cast<const Derived*>(this);
+    result.GetVector() = GetVector() + vec;
+    return result;
+  }
+
+  Derived operator-(const Eigen::Vector<double, Dim>& vec) const {
+    Derived result = *static_cast<const Derived*>(this);
+    result.GetVector() = GetVector() - vec;
+    return result;
+  }
+
+  friend Derived operator+(const Eigen::Vector<double, Dim>& vec, const Derived& derived) {
+    return derived + vec;
+  }
+
+  template <int Rows>
+  friend Eigen::Vector<double, Rows> operator*(
+      const Eigen::Matrix<double, Rows, Dim>& matrix, const Derived& derived) {
+    return matrix * derived.GetVector();
+  }
+};
+
 template <int States>
 using StateVector = Eigen::Vector<double, States>;
 

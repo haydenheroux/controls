@@ -24,8 +24,8 @@ struct TrapezoidTrajectory {
     // NOTE(hayden): Algorithm assumes positive motion
     bool flip = goal.Position() < state.Position();
     if (flip) {
-      state.vector = -state.vector;
-      goal.vector = -goal.vector;
+      state = state * -1.0;
+      goal = goal * -1.0;
     }
 
     if (state.Velocity() > max_velocity) {
@@ -76,7 +76,7 @@ struct TrapezoidTrajectory {
     }
 
     if (flip) {
-      result.vector = -result.vector;
+      result = result * -1.0;
     }
 
     return result;

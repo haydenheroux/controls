@@ -58,20 +58,17 @@ int main() {
     }
 
     reference = profile.Calculate(kTimeStep, reference, goal);
-    // TODO(hayden): Operator -
-    State error{reference.vector - sim.State().vector};
 
-    // TODO(hayden): Operator +
-    Input input{K * error.vector + sim.StabilizingInput().vector};
+    State error = reference - sim.State();
+    Input input = K * error + sim.StabilizingInput();
+    // TODO(hayden): Create more generic `Saturate` method
     auto limited_voltage =
         LimitVoltage(elevator, sim.State().Velocity(), input.Voltage());
-    Input limited_input{limited_voltage};
-    sim.Update(limited_input);
-    sim.SetState(
-        sim.State().PositionClamped(au::meters(0), elevator.max_travel));
 
-    State new_state = sim.State();
-    bool at_goal = new_state.At(goal);
-    publisher.Publish(sim.State(), reference, sim.Input(), at_goal);
+    sim.Update(limited_voltage);
+    auto clamped_state = sim.State().PositionClamped(au::meters(0), elevator.max_travel);
+    sim.SetState(clamped_state);
+
+    publisher.Publish(sim.State(), reference, sim.Input(), sim.State().At(goal));
   });
 }
