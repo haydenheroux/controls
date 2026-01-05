@@ -40,6 +40,13 @@ void Publisher::Publish(PositionVelocityState state,
   nt::Flush(instance);
 }
 
+
+Publisher GetDefaultPublisher() {
+  auto server = nt::CreateInstance();
+  nt::StartServer(server, "", "127.0.0.1", 0, 5810);
+  return Publisher{server};
+}
+
 Subscriber::Subscriber(NT_Inst instance) {
   this->instance = instance;
 

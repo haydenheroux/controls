@@ -13,12 +13,12 @@ struct Elevator {
   // TODO(hayden): Make a conversion factor from angular to linear
   Displacement drum_radius;
   Mass mass;
-  Current max_current;
+  quantities::Current max_current;
   Displacement max_travel;
   Motor motor;
 
   Elevator(GearRatio gear_ratio, Displacement drum_radius, Mass mass,
-           Current max_current, Displacement max_travel, Motor motor)
+           quantities::Current max_current, Displacement max_travel, Motor motor)
       : gear_ratio(gear_ratio),
         drum_radius(drum_radius),
         mass(mass),

@@ -22,6 +22,9 @@ struct Publisher {
                VoltageInput input, bool at_goal) const;
 };
 
+// TODO(hayden): Do not start server if it is already started
+Publisher GetDefaultPublisher();
+
 struct Subscriber {
   NT_Inst instance;
   NT_Subscriber position;
@@ -45,5 +48,7 @@ struct Subscriber {
 
   bool AtGoal() const;
 };
+
+// TODO(hayden): Get default subscriber
 
 };  // namespace reefscape

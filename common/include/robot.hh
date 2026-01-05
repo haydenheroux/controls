@@ -10,6 +10,10 @@ namespace reefscape {
 
 using namespace quantities;
 
+// TODO(hayden): I don't like the 'k' prefix for constants
+
+const LinearAcceleration kGravity = (au::meters / squared(au::second))(-9.81);
+
 const Displacement kTubeWidth = au::inches(1);
 const Displacement kTubeHeight = au::inches(2);
 const Displacement kThinTubeWidth = au::inches(1);

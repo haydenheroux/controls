@@ -1,15 +1,12 @@
-#include <chrono>
-#include <thread>
-
 #include "AffineSystemSim.hh"
 #include "Elevator.hh"
 #include "Motor.hh"
 #include "MotorSystem.hh"
+#include "Loop.hh"
 #include "au/units/amperes.hh"
 #include "au/units/inches.hh"
 #include "au/units/pounds_mass.hh"
 #include "au/units/volts.hh"
-#include "ntcore_cpp.h"
 #include "pubsub.hh"
 #include "robot.hh"
 #include "trajectory.hh"
@@ -20,24 +17,22 @@ using State = PositionVelocityState;
 using Input = VoltageInput;
 
 int main() {
+  // TODO(hayden): Make a fluent API for creating mechanisms?
   // TODO(hayden): Move quantity makers to separate namespace?
   Elevator elevator{units::gear_ratio(5), 0.5 * au::inches(1.273),
                     au::pounds_mass(30),  au::amperes(120),
                     kTotalTravel,         Motor::KrakenX60FOC() * 2};
 
-  auto server = nt::CreateInstance();
-  nt::StartServer(server, "", "127.0.0.1", 0, 5810);
-  Publisher publisher{server};
+  const auto kTimeStep = au::milli(au::seconds)(1);
+  Loop loop{kTimeStep};
 
-  Time time_step = (au::milli(au::seconds))(1);
-  auto wait_time =
-      std::chrono::microseconds(time_step.in<int>(au::micro(au::seconds)));
-  // TODO(hayden): Make this a universal constant
-  LinearAcceleration gravity = (au::meters / squared(au::second))(-9.81);
+  auto publisher = GetDefaultPublisher();
 
-  AffineSystemSim<State, Input> sim{elevator, gravity, time_step};
+  // TODO(hayden): Create wrapper composing Loop + AffineSystemSim that ensures fixed updates
+  AffineSystemSim<State, Input> sim{elevator, kGravity, kTimeStep};
 
-  // TODO(hayden): Implement LQR to find the optimal K
+  // TODO(hayden): Create a diagonal matrix from State -> Input given a gain vector
+  // TODO(hayden): Implement LQR for a given system to find the optimal K
   auto kP = (au::volts / au::meter)(191.2215);
   auto kD = (au::volts / (au::meters / au::second))(4.811);
   Eigen::Matrix<double, Input::Dimension, State::Dimension> K;
@@ -53,20 +48,20 @@ int main() {
   State reference = bottom;
   State goal = top;
 
-  Time total_sim_time = au::seconds(0);
-
-  while (true) {
+  loop.Forever([&]() {
     // TODO(hayden): Determine goal based on events
-    auto cycle_time = au::fmod(total_sim_time, au::seconds(6));
+    auto cycle_time = au::fmod(loop.TotalTime(), au::seconds(6));
     if (cycle_time < au::seconds(3)) {
       goal = top;
     } else {
       goal = bottom;
     }
 
-    reference = profile.Calculate(time_step, reference, goal);
+    reference = profile.Calculate(kTimeStep, reference, goal);
+    // TODO(hayden): Operator -
     State error{reference.vector - sim.State().vector};
 
+    // TODO(hayden): Operator +
     Input input{K * error.vector + sim.StabilizingInput().vector};
     auto limited_voltage =
         LimitVoltage(elevator, sim.State().Velocity(), input.Voltage());
@@ -78,8 +73,5 @@ int main() {
     State new_state = sim.State();
     bool at_goal = new_state.At(goal);
     publisher.Publish(sim.State(), reference, sim.Input(), at_goal);
-
-    total_sim_time += time_step;
-    std::this_thread::sleep_for(wait_time);
-  }
+  });
 }
