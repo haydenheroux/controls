@@ -21,8 +21,8 @@ class AffineSystemSim {
       : continuous_system_(continuous_system),
         continuous_input_(continuous_input),
         continuous_constant_(continuous_constant),
-        state_({}),
-        input_({}) {
+        state_(),
+        input_() {
     auto continuous_matrices =
         std::make_pair(continuous_system_, continuous_input_);
     auto discretized_matrices = Discretize(continuous_matrices, time_step);

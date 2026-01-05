@@ -19,6 +19,9 @@ struct PositionVelocityState {
 
   PositionVelocityState(Displacement position)
       : PositionVelocityState(position, (au::meters / au::second)(0)) {}
+  
+  PositionVelocityState()
+      : PositionVelocityState(au::meters(0), (au::meters / au::second)(0)) {}
 
   PositionVelocityState(const StateVector<Dimension>& state)
       : PositionVelocityState(au::meters(state[0]),

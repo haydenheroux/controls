@@ -9,6 +9,8 @@ struct VoltageInput {
   InputVector<Dimension> vector;
 
   VoltageInput(quantities::Voltage voltage) { SetVoltage(voltage); }
+  
+  VoltageInput() : VoltageInput(au::volts(0)) {}
 
   VoltageInput(const InputVector<Dimension>& input) {
     this->vector[0] = input[0];
