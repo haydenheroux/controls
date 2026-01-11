@@ -1,4 +1,5 @@
 #include "au/units/inches.hh"
+#include "au/units/degrees.hh"
 #include "ntcore_cpp.h"
 #include "pubsub.hh"
 #include "raylib.h"
