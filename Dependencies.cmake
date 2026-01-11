@@ -36,6 +36,7 @@ function(setup_dependencies)
         set(WITH_WPILIB OFF CACHE INTERNAL "With WPILib")
         set(WITH_WPIMATH OFF CACHE INTERNAL "With WPIMath")
         set(WITH_PROTOBUF OFF CACHE INTERNAL "With protobuf")
+        set(WITH_BENCHMARK OFF CACHE INTERNAL "With benchmark")
         set(WITH_WPIUNITS OFF CACHE INTERNAL "With WPIUnits")
         fetchcontent_declare(
             wpilib
