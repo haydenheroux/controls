@@ -2,7 +2,6 @@
 #include "AffineSystemSim.hh"
 #include "Elevator.hh"
 #include "Motor.hh"
-#include "MotorSystem.hh"
 #include "Loop.hh"
 #include "au/io.hh"
 #include "au/units/volts.hh"
@@ -24,7 +23,7 @@ int main() {
   auto publisher = GetDefaultPublisher();
 
   // TODO(hayden): Create wrapper composing Loop + AffineSystemSim that ensures fixed updates
-  AffineSystemSim<State, Input> sim{elevator, kGravity, kTimeStep};
+  AffineSystemSim<State, Input> sim{elevator, 0 * kGravity, kTimeStep};
 
   // TODO(hayden): Create a diagonal matrix from State -> Input given a gain vector
   // TODO(hayden): Implement LQR for a given system to find the optimal K
@@ -59,15 +58,16 @@ int main() {
       goal = bottom;
     }
 
-    reference = profile.Calculate(kTimeStep, reference, goal);
+    // reference = profile.Calculate(kTimeStep, reference, goal);
+    reference = goal;
 
     State error = reference - sim.State();
-    Input input = K * error + sim.StabilizingInput();
+    Input input = K * error;
+    // TODO(hayden): LimitVoltage is broken; need to manually validate
     // TODO(hayden): Create more generic `Saturate` method
-    auto limited_voltage =
-        LimitVoltage(elevator, sim.State().Velocity(), input.Voltage());
-
-    sim.Update(limited_voltage);
+    // auto limited_voltage =
+    //     LimitVoltage(elevator, sim.State().Velocity(), input.Voltage());
+    sim.Update(input);
     auto clamped_state = sim.State().PositionClamped(au::meters(0), elevator.max_travel);
     sim.SetState(clamped_state);
 
