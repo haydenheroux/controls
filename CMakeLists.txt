@@ -1,9 +1,9 @@
 cmake_minimum_required(VERSION 3.15...3.31)
 
 project(
-    elevator
+    controls
     VERSION 1.0
-    DESCRIPTION "elevator simulation / controls"
+    DESCRIPTION "Controls toolbox"
     LANGUAGES CXX)
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
