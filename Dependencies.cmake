@@ -8,6 +8,7 @@ function(setup_dependencies)
           GIT_TAG "main"
           EXCLUDE_FROM_ALL
         )
+        set(AU_ENABLE_TESTING OFF CACHE INTERNAL "Enable AU tests")
         fetchcontent_makeavailable(Au)
     endif()
 
