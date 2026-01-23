@@ -6,6 +6,7 @@
 #include "au/io.hh"
 #include "au/units/volts.hh"
 #include "input.hh"
+#include "nt_pubsub.hh"
 #include "zmq_pubsub.hh"
 #include "robot.hh"
 #include "trajectory.hh"
@@ -22,7 +23,7 @@ int main() {
   const auto kTimeStep = au::milli(au::seconds)(1);
   Loop loop{kTimeStep};
 
-  auto publisher = GetPublisher<ZMQPublisher>();
+  auto publisher = GetPublisher<NTPublisher>();
 
   // TODO(hayden): Create wrapper composing Loop + AffineSystemSim that ensures fixed updates
   AffineSystemSim<State, Input> sim{elevator, 0 * kGravity, kTimeStep};

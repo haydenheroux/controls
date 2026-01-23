@@ -10,7 +10,7 @@
 using namespace reefscape;
 
 int main() {
-  auto subscriber = GetSubscriber<ZMQSubscriber>();
+  auto subscriber = GetSubscriber<NTSubscriber>();
 
   Init({pixels(360.0), pixels(640.0), "Reefscape Elevator Simulator", 60});
 
