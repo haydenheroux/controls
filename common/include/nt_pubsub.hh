@@ -1,6 +1,8 @@
 #pragma once
 
 #include "ntcore_c.h"
+#include "ntcore_cpp.h"
+#include "pubsub.hh"
 #include "state.hh"
 
 namespace reefscape {
@@ -15,7 +17,12 @@ struct NTPublisher {
   void Publish(PositionVelocityState state);
 };
 
-NTPublisher GetPublisher();
+template<>
+inline NTPublisher GetPublisher<NTPublisher>() {
+  auto server = nt::CreateInstance();
+  nt::StartServer(server, "", "127.0.0.1", 0, 5810);
+  return NTPublisher{server};
+}
 
 struct NTSubscriber {
   NT_Inst instance;
@@ -27,6 +34,12 @@ struct NTSubscriber {
   PositionVelocityState Subscribe();
 };
 
-NTSubscriber GetSubscriber();
+template <>
+inline NTSubscriber GetSubscriber<NTSubscriber>() {
+  auto client = nt::CreateInstance();
+  nt::StartClient4(client, "client");
+  nt::SetServer(client, "127.0.0.1", 5810);
+  return NTSubscriber{client};
+}
 
 };  // namespace reefscape

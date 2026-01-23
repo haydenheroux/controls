@@ -5,11 +5,12 @@
 #include "render.hh"
 #include "render_units.hh"
 #include "state.hh"
+#include "zmq_pubsub.hh"
 
 using namespace reefscape;
 
 int main() {
-  auto subscriber = GetSubscriber();
+  auto subscriber = GetSubscriber<ZMQSubscriber>();
 
   Init({pixels(360.0), pixels(640.0), "Reefscape Elevator Simulator", 60});
 

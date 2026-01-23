@@ -23,12 +23,6 @@ void NTPublisher::Publish(PositionVelocityState state) {
   nt::Flush(instance);
 }
 
-NTPublisher GetPublisher() {
-  auto server = nt::CreateInstance();
-  nt::StartServer(server, "", "127.0.0.1", 0, 5810);
-  return NTPublisher{server};
-}
-
 NTSubscriber::NTSubscriber(NT_Inst instance) {
   this->instance = instance;
 
@@ -43,13 +37,6 @@ PositionVelocityState NTSubscriber::Subscribe() {
     au::meters(nt::GetDouble(position, 0.0)),
     (au::meters / au::seconds)(nt::GetDouble(velocity, 0.0)),
   };
-}
-
-NTSubscriber GetSubscriber() {
-  auto client = nt::CreateInstance();
-  nt::StartClient4(client, "client");
-  nt::SetServer(client, "127.0.0.1", 5810);
-  return NTSubscriber{client};
 }
 
 };  // namespace reefscape
