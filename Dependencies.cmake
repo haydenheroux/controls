@@ -47,4 +47,8 @@ function(setup_dependencies)
         fetchcontent_makeavailable(wpilib)
     endif()
 
+    if (NOT TARGET cppzmq)
+        find_package(cppzmq)
+    endif()
+
 endfunction()
