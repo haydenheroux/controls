@@ -1,8 +1,8 @@
 #include <cmath>
 #include <iostream>
-#include "MotorSystem.hh"
+#include "system/MotorSystem.hh"
 #include "au/io.hh"
-#include "Elevator.hh"
+#include "system/Elevator.hh"
 #include "au/units/inches.hh"
 #include "au/units/meters.hh"
 #include "au/units/pounds_mass.hh"

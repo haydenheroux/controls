@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Eigen.hh"
-#include "Elevator.hh"
 #include "units.hh"
 
 namespace reefscape {
@@ -32,16 +31,6 @@ class AffineSystemSim {
     discrete_constant_ << discrete_input_ * continuous_input_pseudoinverse_ *
                               continuous_constant_;
   }
-
-  AffineSystemSim(const Elevator &elevator, LinearAcceleration gravity,
-                  Time time_step)
-      : AffineSystemSim(
-            elevator.ContinuousSystemMatrix<StateType>(),
-            elevator.ContinuousInputMatrix<StateType, InputType>(),
-            // TODO(hayden): This isn't compatible with other state types
-            StateVector<States>{0,
-                                gravity.in(au::meters / squared(au::second))},
-            time_step) {}
 
   void Update(InputType input) {
     input_ = input.vector;

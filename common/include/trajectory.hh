@@ -1,6 +1,6 @@
 #pragma once
 
-#include "MotorSystem.hh"
+#include "system/MotorSystem.hh"
 #include "state.hh"
 #include "units.hh"
 

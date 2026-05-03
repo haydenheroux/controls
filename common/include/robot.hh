@@ -2,7 +2,7 @@
 
 #include <string_view>
 
-#include "Motor.hh"
+#include "system/Motor.hh"
 #include "au/math.hh"
 #include "au/units/inches.hh"
 #include "au/units/pounds_mass.hh"
@@ -72,6 +72,7 @@ const Displacement TOTAL_TRAVEL =
     kStageTwoTravel + kStageThreeTravel + kCarriageTravel;
 const Motor MOTORS = Motor::KrakenX60() * 2;
 
+const std::string_view kTimeKey = "/time";
 const std::string_view kElevatorPositionKey = "/elevator/position";
 const std::string_view kElevatorVelocityKey = "/elevator/velocity";
 const std::string_view kElevatorReferencePositionKey =

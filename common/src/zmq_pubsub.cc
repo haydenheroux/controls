@@ -1,6 +1,9 @@
 #include "zmq_pubsub.hh"
+#include <utility>
 #include <zmq.hpp>
+#include "au/prefix.hh"
 #include "state.hh"
+#include "units.hh"
 
 namespace reefscape {
 
@@ -10,10 +13,11 @@ ZMQPublisher::ZMQPublisher(const std::string& endpoint) {
   socket.bind(endpoint);
 }
 
-void ZMQPublisher::Publish(PositionVelocityState state) {
+void ZMQPublisher::Publish(Time time, PositionVelocityState state) {
+  double time_us = time.in(au::micro(au::seconds));
   double position_m = state.Position().in(au::meters);
   double velocity_mps = state.Velocity().in((au::meters / au::seconds));
-  socket.send(zmq::buffer({position_m, velocity_mps}), zmq::send_flags::none);
+  socket.send(zmq::buffer({time_us, position_m, velocity_mps}), zmq::send_flags::none);
 }
 
 ZMQSubscriber::ZMQSubscriber(const std::string& endpoint)
@@ -24,16 +28,20 @@ ZMQSubscriber::ZMQSubscriber(const std::string& endpoint)
   socket.set(zmq::sockopt::subscribe, "");
 }
 
-PositionVelocityState ZMQSubscriber::Subscribe() {
+std::pair<Time, PositionVelocityState> ZMQSubscriber::Subscribe() {
   zmq::message_t message;
   zmq::recv_result_t result = socket.recv(message, zmq::recv_flags::none);
   bool none = !result.has_value();
-  bool incorrectSize = message.size() != 2 * sizeof(double);
+  bool incorrectSize = message.size() != 3 * sizeof(double);
   if (none || incorrectSize) {
-    return PositionVelocityState{};
+    auto zero = (au::micro(au::seconds))(0);
+    return std::make_pair(zero, PositionVelocityState{});
   }
   const double* data = static_cast<const double*>(message.data());
-  return PositionVelocityState{au::meters(data[0]), (au::meters / au::second)(data[1])};
+
+  auto time = (au::micro(au::seconds))(data[0]);
+  auto state = PositionVelocityState{au::meters(data[1]), (au::meters / au::second)(data[2])};
+  return std::make_pair(time, state);
 }
 
 };  // namespace reefscape

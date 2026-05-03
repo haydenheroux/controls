@@ -12,7 +12,7 @@ struct ZMQPublisher {
 
   ZMQPublisher(const std::string& endpoint);
 
-  void Publish(PositionVelocityState state);
+  void Publish(Time time, PositionVelocityState state);
 };
 
 
@@ -27,7 +27,7 @@ struct ZMQSubscriber {
 
   ZMQSubscriber(const std::string& endpoint);
 
-  PositionVelocityState Subscribe();
+  std::pair<Time, PositionVelocityState> Subscribe();
 };
 
 template <>

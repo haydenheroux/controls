@@ -100,6 +100,7 @@ template <int States, int Inputs>
   requires(States > Inputs)
 using InputLeftPseudoInverseMatrix = Eigen::Matrix<double, Inputs, States>;
 
+// TODO(hayden): "Matrices" is ambiguous
 template <int States, int Inputs>
 using Matrices = std::pair<SystemMatrix<States>, InputMatrix<States, Inputs>>;
 

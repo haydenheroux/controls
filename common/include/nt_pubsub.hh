@@ -9,12 +9,13 @@ namespace reefscape {
 
 struct NTPublisher {
   NT_Inst instance;
+  NT_Publisher time;
   NT_Publisher position;
   NT_Publisher velocity;
 
   NTPublisher(NT_Inst instance);
 
-  void Publish(PositionVelocityState state);
+  void Publish(Time time, PositionVelocityState state);
 };
 
 template<>
@@ -26,12 +27,13 @@ inline NTPublisher GetPublisher<NTPublisher>() {
 
 struct NTSubscriber {
   NT_Inst instance;
+  NT_Subscriber time;
   NT_Subscriber position;
   NT_Subscriber velocity;
 
   NTSubscriber(NT_Inst instance);
 
-  PositionVelocityState Subscribe();
+  std::pair<Time, PositionVelocityState> Subscribe();
 };
 
 template <>

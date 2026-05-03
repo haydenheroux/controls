@@ -1,15 +1,15 @@
 #include <iostream>
-#include "AffineSystemSim.hh"
-#include "Elevator.hh"
-#include "Motor.hh"
+#include "au/power_aliases.hh"
+#include "au/units/seconds.hh"
+#include "simulator/AffineSystemSim.hh"
+#include "system/Elevator.hh"
 #include "Loop.hh"
-#include "au/io.hh"
 #include "au/units/volts.hh"
 #include "input.hh"
-#include "nt_pubsub.hh"
 #include "robot.hh"
 #include "trajectory.hh"
 #include "units.hh"
+#include "zmq_pubsub.hh"
 
 using namespace reefscape;
 using State = PositionVelocityState;
@@ -18,13 +18,19 @@ using Input = VoltageInput;
 int main() {
   Elevator elevator{GEAR_RATIO, DRUM_RADIUS, MASS, MAX_CURRENT, TOTAL_TRAVEL, MOTORS};
 
-  const auto kTimeStep = au::milli(au::seconds)(1);
+  const auto kTimeStep = au::milli(au::seconds)(16.67);
   Loop loop{kTimeStep};
 
-  auto publisher = GetPublisher<NTPublisher>();
+  auto publisher = GetPublisher<ZMQPublisher>();
 
-  // TODO(hayden): Create wrapper composing Loop + AffineSystemSim that ensures fixed updates
-  AffineSystemSim<State, Input> sim{elevator, 0 * kGravity, kTimeStep};
+  auto A = elevator.ContinuousSystemMatrix<State>();
+  auto B = elevator.ContinuousInputMatrix<State, Input>();
+
+  // TODO(hayden): Encodes gravity as `State` when it should be `TimeDerivative<State>`
+  LinearVelocity gravityVelocity = (au::meters / au::second)(kGravity.in(au::meters / au::squared(au::seconds)));
+  State gravity = State{au::meters(0), gravityVelocity};
+
+  AffineSystemSim<State, Input> sim{A, B, gravity.vector, kTimeStep};
 
   // TODO(hayden): Create a diagonal matrix from State -> Input given a gain vector
   // TODO(hayden): Implement LQR for a given system to find the optimal K
@@ -41,11 +47,11 @@ int main() {
   TrapezoidTrajectory<units::DisplacementUnit> profile{elevator};
   TrapezoidTrajectoryDurations bottom_to_top = profile.Durations(bottom, top);
 
-  std::cout << "Max velocity: " << profile.max_velocity << std::endl;
-  std::cout << "Max acceleration: " << profile.max_acceleration << std::endl;
-  std::cout << "Bottom: " << bottom.Position() << std::endl;
-  std::cout << "Top: " << top.Position() << std::endl;
-  std::cout << "Bottom to top timing: " << bottom_to_top.total_duration << std::endl;
+  std::cout << "Max velocity: " << profile.max_velocity.in(au::meters / au::second) << " m/s" << std::endl;
+  std::cout << "Max acceleration: " << profile.max_acceleration.in(au::meters / au::squared(au::second)) << " m/s^2" << std::endl;
+  std::cout << "Bottom: " << bottom.Position().in(au::meters) << " m" << std::endl;
+  std::cout << "Top: " << top.Position().in(au::meters) << " m" << std::endl;
+  std::cout << "Bottom to top timing: " << bottom_to_top.total_duration.in(au::seconds) << " s" << std::endl;
 
   State reference = bottom;
   State goal = top;
@@ -59,8 +65,7 @@ int main() {
       goal = bottom;
     }
 
-    // reference = profile.Calculate(kTimeStep, reference, goal);
-    reference = goal;
+    reference = profile.Calculate(kTimeStep, reference, goal);
 
     State error = reference - sim.State();
     Input input = K * error;
@@ -72,6 +77,6 @@ int main() {
     auto clamped_state = sim.State().PositionClamped(au::meters(0), elevator.max_travel);
     sim.SetState(clamped_state);
 
-    publisher.Publish(sim.State());
+    publisher.Publish(loop.LastTickTime(), sim.State());
   });
 }
