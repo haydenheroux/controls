@@ -2,8 +2,8 @@
 
 #include "Eigen.hh"
 #include "input.hh"
-#include "state/PositionVelocityState.hh"
 #include "simulator/concepts.hh"
+#include "state/PositionVelocityState.hh"
 #include "units.hh"
 
 namespace reefscape {
@@ -11,7 +11,8 @@ namespace reefscape {
 using namespace quantities;
 
 template <class StateType, class InputType>
-  requires SupportsVectorOperations<StateType> && SupportsVectorOperations<InputType>
+  requires SupportsVectorOperations<StateType> &&
+           SupportsVectorOperations<InputType>
 class AffineSystemSim {
   static constexpr int States = StateType::Dimension;
   static constexpr int Inputs = InputType::Dimension;
@@ -43,9 +44,7 @@ class AffineSystemSim {
 
   StateType State() const { return StateType{state_}; }
 
-  void SetState(StateType state) {
-    state_ = state.vector;
-  }
+  void SetState(StateType state) { state_ = state.vector; }
 
   InputType Input() const { return InputType{input_}; }
 
@@ -72,5 +71,7 @@ template <typename S, typename I>
 inline constexpr bool AffineSystemSim_satisfies_simulator_v =
     reefscape::Simulator<reefscape::AffineSystemSim<S, I>, S, I>;
 
-static_assert(AffineSystemSim_satisfies_simulator_v<reefscape::PositionVelocityState, reefscape::VoltageInput>,
-              "AffineSystemSim must satisfy the Simulator concept for PositionVelocityState/VoltageInput");
+static_assert(AffineSystemSim_satisfies_simulator_v<
+                  reefscape::PositionVelocityState, reefscape::VoltageInput>,
+              "AffineSystemSim must satisfy the Simulator concept for "
+              "PositionVelocityState/VoltageInput");

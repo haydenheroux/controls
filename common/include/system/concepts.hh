@@ -2,9 +2,9 @@
 
 #include <concepts>
 
-#include "Eigen.hh"    // provides TimeDerivative / TimeDerivativeOf
-#include "units.hh"    // unit types (AngleUnit, DisplacementUnit, etc.)
+#include "Eigen.hh"         // provides TimeDerivative / TimeDerivativeOf
 #include "system/Motor.hh"  // Motor type used by motor-system concepts
+#include "units.hh"         // unit types (AngleUnit, DisplacementUnit, etc.)
 
 namespace reefscape {
 
@@ -12,7 +12,8 @@ namespace reefscape {
  * Minimal System concept
  *
  * A System is any type that exposes a member:
- *   TimeDerivative<StateType> Dynamics(const StateType& x, const InputType& u) const;
+ *   TimeDerivative<StateType> Dynamics(const StateType& x, const InputType& u)
+ * const;
  *
  * The concept checks only that the member exists and that its return type is
  * convertible to the declared TimeDerivative<StateType>. Keeping this concept
@@ -20,10 +21,10 @@ namespace reefscape {
  * explicit (Dynamics returns a time-derivative wrapper for the given state).
  */
 template <typename SystemType, typename StateType, typename InputType>
-concept System = requires(const SystemType &sys, const StateType &x, const InputType &u) {
-  { sys.Dynamics(x, u) } -> std::convertible_to<TimeDerivative<StateType>>;
-};
-
+concept System =
+    requires(const SystemType& sys, const StateType& x, const InputType& u) {
+      { sys.Dynamics(x, u) } -> std::convertible_to<TimeDerivative<StateType>>;
+    };
 
 /*
  * MotorSystem family of concepts
@@ -45,15 +46,22 @@ concept System = requires(const SystemType &sys, const StateType &x, const Input
  *  - `GetAngularVoltageCoefficient()` -> AngularVoltageCoefficient
  */
 template <typename S>
-concept RotaryMotorSystem = requires(const S& system,
-                                     quantities::AngularVelocity v,
-                                     quantities::Voltage u) {
+concept RotaryMotorSystem = requires(
+    const S& system, quantities::AngularVelocity v, quantities::Voltage u) {
   { system.motor } -> std::convertible_to<Motor>;
   { system.max_current } -> std::convertible_to<quantities::Current>;
-  { system.MotorVelocity(v) } -> std::convertible_to<quantities::AngularVelocity>;
-  { system.Acceleration(v, u) } -> std::convertible_to<quantities::AngularAcceleration>;
-  { system.VelocityCoefficient() } -> std::convertible_to<quantities::AngularVelocityCoefficient>;
-  { system.GetAngularVoltageCoefficient() } -> std::convertible_to<quantities::AngularVoltageCoefficient>;
+  {
+    system.MotorVelocity(v)
+  } -> std::convertible_to<quantities::AngularVelocity>;
+  {
+    system.Acceleration(v, u)
+  } -> std::convertible_to<quantities::AngularAcceleration>;
+  {
+    system.VelocityCoefficient()
+  } -> std::convertible_to<quantities::AngularVelocityCoefficient>;
+  {
+    system.GetAngularVoltageCoefficient()
+  } -> std::convertible_to<quantities::AngularVoltageCoefficient>;
 };
 
 /*
@@ -61,15 +69,22 @@ concept RotaryMotorSystem = requires(const S& system,
  * Expects analogous members but in linear units.
  */
 template <typename S>
-concept TranslationalMotorSystem = requires(const S& system,
-                                            quantities::LinearVelocity v,
-                                            quantities::Voltage u) {
+concept TranslationalMotorSystem = requires(
+    const S& system, quantities::LinearVelocity v, quantities::Voltage u) {
   { system.motor } -> std::convertible_to<Motor>;
   { system.max_current } -> std::convertible_to<quantities::Current>;
-  { system.MotorVelocity(v) } -> std::convertible_to<quantities::AngularVelocity>;
-  { system.Acceleration(v, u) } -> std::convertible_to<quantities::LinearAcceleration>;
-  { system.VelocityCoefficient() } -> std::convertible_to<quantities::LinearVelocityCoefficient>;
-  { system.GetLinearVoltageCoefficient() } -> std::convertible_to<quantities::LinearVoltageCoefficient>;
+  {
+    system.MotorVelocity(v)
+  } -> std::convertible_to<quantities::AngularVelocity>;
+  {
+    system.Acceleration(v, u)
+  } -> std::convertible_to<quantities::LinearAcceleration>;
+  {
+    system.VelocityCoefficient()
+  } -> std::convertible_to<quantities::LinearVelocityCoefficient>;
+  {
+    system.GetLinearVoltageCoefficient()
+  } -> std::convertible_to<quantities::LinearVoltageCoefficient>;
 };
 
 /*
@@ -83,6 +98,7 @@ concept TranslationalMotorSystem = requires(const S& system,
 template <typename S, typename U>
 concept MotorSystem =
     (std::same_as<U, decltype(units::AngleUnit{})> && RotaryMotorSystem<S>) ||
-    (std::same_as<U, decltype(units::DisplacementUnit{})> && TranslationalMotorSystem<S>);
+    (std::same_as<U, decltype(units::DisplacementUnit{})> &&
+     TranslationalMotorSystem<S>);
 
 }  // namespace reefscape

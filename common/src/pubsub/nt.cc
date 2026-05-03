@@ -1,4 +1,5 @@
 #include "pubsub/nt.hh"
+
 #include <utility>
 
 #include "au/units/seconds.hh"
@@ -11,8 +12,7 @@ namespace reefscape {
 NTPublisher::NTPublisher(NT_Inst instance) {
   this->instance = instance;
 
-  time = nt::Publish(nt::GetTopic(instance, kTimeKey),
-                         NT_DOUBLE, "double");
+  time = nt::Publish(nt::GetTopic(instance, kTimeKey), NT_DOUBLE, "double");
   position = nt::Publish(nt::GetTopic(instance, kElevatorPositionKey),
                          NT_DOUBLE, "double");
   velocity = nt::Publish(nt::GetTopic(instance, kElevatorVelocityKey),
@@ -30,9 +30,7 @@ void NTPublisher::Publish(Time t, PositionVelocityState state) {
 NTSubscriber::NTSubscriber(NT_Inst instance) {
   this->instance = instance;
 
-
-  time = nt::Subscribe(nt::GetTopic(instance, kTimeKey),
-                           NT_DOUBLE, "double");
+  time = nt::Subscribe(nt::GetTopic(instance, kTimeKey), NT_DOUBLE, "double");
   position = nt::Subscribe(nt::GetTopic(instance, kElevatorPositionKey),
                            NT_DOUBLE, "double");
   velocity = nt::Subscribe(nt::GetTopic(instance, kElevatorVelocityKey),
@@ -42,8 +40,8 @@ NTSubscriber::NTSubscriber(NT_Inst instance) {
 std::pair<Time, PositionVelocityState> NTSubscriber::Subscribe() {
   auto now = au::micro(au::seconds)(nt::GetDouble(time, 0.0));
   auto state = PositionVelocityState{
-    au::meters(nt::GetDouble(position, 0.0)),
-    (au::meters / au::seconds)(nt::GetDouble(velocity, 0.0)),
+      au::meters(nt::GetDouble(position, 0.0)),
+      (au::meters / au::seconds)(nt::GetDouble(velocity, 0.0)),
   };
   return std::make_pair(now, state);
 }

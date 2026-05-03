@@ -19,7 +19,8 @@ struct Elevator {
   Motor motor;
 
   Elevator(GearRatio gear_ratio, Displacement drum_radius, Mass mass,
-           quantities::Current max_current, Displacement max_travel, Motor motor)
+           quantities::Current max_current, Displacement max_travel,
+           Motor motor)
       : gear_ratio(gear_ratio),
         drum_radius(drum_radius),
         mass(mass),
@@ -27,7 +28,7 @@ struct Elevator {
         max_travel(max_travel),
         motor(motor) {}
 
-LinearVelocityCoefficient VelocityCoefficient() const;
+  LinearVelocityCoefficient VelocityCoefficient() const;
 
   quantities::LinearVoltageCoefficient GetLinearVoltageCoefficient() const;
 
@@ -39,7 +40,7 @@ LinearVelocityCoefficient VelocityCoefficient() const;
                                   Voltage voltage) const;
 
   AngularAcceleration Acceleration(AngularVelocity velocity,
-                                  Voltage voltage) const;
+                                   Voltage voltage) const;
 
   quantities::Force Force(LinearVelocity velocity, Voltage voltage) const;
 
@@ -49,30 +50,34 @@ LinearVelocityCoefficient VelocityCoefficient() const;
   // VectorBase-derived wrappers (e.g., PositionVelocityState, VoltageInput).
   template <class State, class Input>
     requires HasDimension<State> && HasDimension<Input>
-  TimeDerivative<State> Dynamics(const State &x, const Input &u) const;
+  TimeDerivative<State> Dynamics(const State& x, const Input& u) const;
 
   // Continuous-time linearization (optional capability)
   // Returns (A, B) continuous-time Jacobians at (x, u).
   template <class State, class Input>
     requires HasDimension<State> && HasDimension<Input>
-  std::pair<SystemMatrix<State::Dimension>, InputMatrix<State::Dimension, Input::Dimension>>
-  Linearize(const State &x, const Input &u) const;
+  std::pair<SystemMatrix<State::Dimension>,
+            InputMatrix<State::Dimension, Input::Dimension>>
+  Linearize(const State& x, const Input& u) const;
 
   // TODO(hayden): Move to a different class
-  // Default implementation now delegates to the generic MotorContinuous helpers.
-  // This avoids duplicating the canonical motor-driven A/B construction across
-  // multiple motor-like plants.
+  // Default implementation now delegates to the generic MotorContinuous
+  // helpers. This avoids duplicating the canonical motor-driven A/B
+  // construction across multiple motor-like plants.
   template <class State>
     requires HasDimension<State>
   SystemMatrix<State::Dimension> ContinuousSystemMatrix() const {
-    return MotorContinuousSystemMatrix<Elevator, PositionVelocityState, VoltageInput>(*this);
+    return MotorContinuousSystemMatrix<Elevator, PositionVelocityState,
+                                       VoltageInput>(*this);
   }
 
   // TODO(hayden): Move to a different class
   template <class State, class Input>
     requires HasDimension<State> && HasDimension<Input>
-  InputMatrix<State::Dimension, Input::Dimension> ContinuousInputMatrix() const {
-    return MotorContinuousInputMatrix<Elevator, PositionVelocityState, VoltageInput>(*this);
+  InputMatrix<State::Dimension, Input::Dimension> ContinuousInputMatrix()
+      const {
+    return MotorContinuousInputMatrix<Elevator, PositionVelocityState,
+                                      VoltageInput>(*this);
   }
 };
 

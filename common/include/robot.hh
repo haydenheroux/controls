@@ -2,10 +2,10 @@
 
 #include <string_view>
 
-#include "system/Motor.hh"
 #include "au/math.hh"
 #include "au/units/inches.hh"
 #include "au/units/pounds_mass.hh"
+#include "system/Motor.hh"
 #include "units.hh"
 
 namespace reefscape {

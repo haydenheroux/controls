@@ -16,7 +16,8 @@ concept HasDimension = requires {
 template <typename T>
 concept SupportsVectorOperations =
     HasDimension<T> &&
-    requires(T a, T b, double scalar, const Eigen::Vector<double, T::Dimension> &vec) {
+    requires(T a, T b, double scalar,
+             const Eigen::Vector<double, T::Dimension>& vec) {
       { a + b } -> std::convertible_to<T>;
       { a - b } -> std::convertible_to<T>;
       { a + vec } -> std::convertible_to<T>;
@@ -73,7 +74,8 @@ class VectorBase {
     return result;
   }
 
-  friend Derived operator+(const Eigen::Vector<double, Dim>& vec, const Derived& derived) {
+  friend Derived operator+(const Eigen::Vector<double, Dim>& vec,
+                           const Derived& derived) {
     return derived + vec;
   }
 
@@ -147,7 +149,7 @@ template <typename State>
 using NumericTimeDerivative = Eigen::Vector<double, State::Dimension>;
 
 template <int States, int Inputs>
-Matrices<States, Inputs> Discretize(Matrices<States, Inputs> &AcBc,
+Matrices<States, Inputs> Discretize(Matrices<States, Inputs>& AcBc,
                                     quantities::Time sample_period) {
   using BlockMatrix = Eigen::Matrix<double, States + Inputs, States + Inputs>;
 
@@ -169,7 +171,7 @@ Matrices<States, Inputs> Discretize(Matrices<States, Inputs> &AcBc,
 
 template <int States, int Inputs>
 InputLeftPseudoInverseMatrix<States, Inputs> PseudoInverse(
-    const InputMatrix<States, Inputs> &Bc) {
+    const InputMatrix<States, Inputs>& Bc) {
   // Bc⁺ = (BcᵀBc)⁻¹Bcᵀ
   auto BcT = Bc.transpose();
   return (BcT * Bc).inverse() * BcT;

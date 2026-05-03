@@ -28,9 +28,10 @@ namespace reefscape {
  * accepts a non-const `P&` here.
  */
 template <typename P, typename T>
-concept Publisher = requires(P &publisher, const quantities::Time time, const T &type) {
-  { publisher.Publish(time, type) } -> std::same_as<void>;
-};
+concept Publisher =
+    requires(P& publisher, const quantities::Time time, const T& type) {
+      { publisher.Publish(time, type) } -> std::same_as<void>;
+    };
 
 template <typename P>
 P GetPublisher();
@@ -48,7 +49,7 @@ P GetPublisher();
  * internal state), so the concept accepts a non-const `S&`.
  */
 template <typename S, typename R>
-concept Subscriber = requires(S &subscriber) {
+concept Subscriber = requires(S& subscriber) {
   { subscriber.Subscribe() } -> std::same_as<std::pair<quantities::Time, R>>;
 };
 

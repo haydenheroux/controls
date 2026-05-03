@@ -44,19 +44,20 @@ quantities::Torque Arm::Torque(AngularVelocity velocity,
 // Delegate to the Arm's rotary adapter (MotorRotarySystemAdapter) to avoid
 // duplicating logic and to keep continuous-time A/B computation centralized.
 template <>
-TimeDerivative<AngleVelocityState> Arm::Dynamics<AngleVelocityState, VoltageInput>(
-    const AngleVelocityState &x, const VoltageInput &u) const {
+TimeDerivative<AngleVelocityState>
+Arm::Dynamics<AngleVelocityState, VoltageInput>(const AngleVelocityState& x,
+                                                const VoltageInput& u) const {
   return MakeMotorRotarySystemAdapter(*this).Dynamics(x, u);
 }
 
-// Linearize specialization: return continuous-time (A, B) at the provided point.
-// For this motor-driven arm the continuous A and B follow the canonical
+// Linearize specialization: return continuous-time (A, B) at the provided
+// point. For this motor-driven arm the continuous A and B follow the canonical
 // rotary structure; the adapter provides the matrices.
 template <>
 std::pair<SystemMatrix<AngleVelocityState::Dimension>,
           InputMatrix<AngleVelocityState::Dimension, VoltageInput::Dimension>>
-Arm::Linearize<AngleVelocityState, VoltageInput>(const AngleVelocityState &x,
-                                                  const VoltageInput &u) const {
+Arm::Linearize<AngleVelocityState, VoltageInput>(const AngleVelocityState& x,
+                                                 const VoltageInput& u) const {
   return MakeMotorRotarySystemAdapter(*this).Linearize(x, u);
 }
 

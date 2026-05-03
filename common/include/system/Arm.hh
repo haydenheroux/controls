@@ -40,14 +40,17 @@ struct Arm {
   AngularVelocityCoefficient VelocityCoefficient() const;
 
   AngularVoltageCoefficient GetAngularVoltageCoefficient() const;
-  AngularVoltageCoefficient VoltageCoefficient() const { return GetAngularVoltageCoefficient(); }
+  AngularVoltageCoefficient VoltageCoefficient() const {
+    return GetAngularVoltageCoefficient();
+  }
 
   AngularVelocity MotorVelocity(AngularVelocity velocity) const;
 
   AngularAcceleration Acceleration(AngularVelocity velocity,
                                    quantities::Voltage voltage) const;
 
-  quantities::Torque Torque(AngularVelocity velocity, quantities::Voltage voltage) const;
+  quantities::Torque Torque(AngularVelocity velocity,
+                            quantities::Voltage voltage) const;
 
   // Dynamics API to satisfy the System concept for rotary plants:
   // xdot = Dynamics(x, u)
@@ -55,13 +58,14 @@ struct Arm {
   // concrete AngleVelocityState / VoltageInput pairing.
   template <class State, class Input>
     requires HasDimension<State> && HasDimension<Input>
-  TimeDerivative<State> Dynamics(const State &x, const Input &u) const;
+  TimeDerivative<State> Dynamics(const State& x, const Input& u) const;
 
   // Continuous-time linearization (optional capability)
   template <class State, class Input>
     requires HasDimension<State> && HasDimension<Input>
-  std::pair<SystemMatrix<State::Dimension>, InputMatrix<State::Dimension, Input::Dimension>>
-  Linearize(const State &x, const Input &u) const;
+  std::pair<SystemMatrix<State::Dimension>,
+            InputMatrix<State::Dimension, Input::Dimension>>
+  Linearize(const State& x, const Input& u) const;
 
   // Default A/B helpers delegate to the generic motor helpers. For rotary
   // plants the angular overloads will be selected automatically.
@@ -73,7 +77,8 @@ struct Arm {
 
   template <class State, class Input>
     requires HasDimension<State> && HasDimension<Input>
-  InputMatrix<State::Dimension, Input::Dimension> ContinuousInputMatrix() const {
+  InputMatrix<State::Dimension, Input::Dimension> ContinuousInputMatrix()
+      const {
     return MotorContinuousInputMatrix(*this);
   }
 };

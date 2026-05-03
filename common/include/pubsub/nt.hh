@@ -1,8 +1,8 @@
 #pragma once
 
+#include "concepts.hh"
 #include "ntcore_c.h"
 #include "ntcore_cpp.h"
-#include "concepts.hh"
 #include "state/PositionVelocityState.hh"
 
 namespace reefscape {
@@ -18,7 +18,7 @@ struct NTPublisher {
   void Publish(Time time, PositionVelocityState state);
 };
 
-template<>
+template <>
 inline NTPublisher GetPublisher<NTPublisher>() {
   auto server = nt::CreateInstance();
   nt::StartServer(server, "", "127.0.0.1", 0, 5810);
@@ -44,9 +44,11 @@ inline NTSubscriber GetSubscriber<NTSubscriber>() {
   return NTSubscriber{client};
 }
 
-static_assert(Publisher<NTPublisher, PositionVelocityState>,
-              "NTPublisher must satisfy the Publisher concept for PositionVelocityState");
+static_assert(
+    Publisher<NTPublisher, PositionVelocityState>,
+    "NTPublisher must satisfy the Publisher concept for PositionVelocityState");
 static_assert(Subscriber<NTSubscriber, PositionVelocityState>,
-              "NTSubscriber must satisfy the Subscriber concept for PositionVelocityState");
+              "NTSubscriber must satisfy the Subscriber concept for "
+              "PositionVelocityState");
 
 };  // namespace reefscape

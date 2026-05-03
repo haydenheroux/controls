@@ -47,7 +47,9 @@ struct TrapezoidTrajectory {
     durations.acceleration_duration = acceleration_time - start_time;
     durations.cruise_duration = cruise_distance / max_velocity;
     durations.deceleration_duration = acceleration_time - end_time;
-    durations.total_duration = durations.acceleration_duration + durations.cruise_duration + durations.deceleration_duration;
+    durations.total_duration = durations.acceleration_duration +
+                               durations.cruise_duration +
+                               durations.deceleration_duration;
     return durations;
   }
 
@@ -75,10 +77,12 @@ struct TrapezoidTrajectory {
           result.Position() +
           (state.Velocity() + 0.5 * time_step * max_acceleration) * time_step);
       result.SetVelocity(result.Velocity() + time_step * max_acceleration);
-    } else if (time_step <= durations.acceleration_duration + durations.cruise_duration) {
+    } else if (time_step <=
+               durations.acceleration_duration + durations.cruise_duration) {
       result.SetPosition(
           state.Position() +
-          (state.Velocity() + 0.5 * durations.acceleration_duration * max_acceleration) *
+          (state.Velocity() +
+           0.5 * durations.acceleration_duration * max_acceleration) *
               durations.acceleration_duration +
           max_velocity * (time_step - durations.acceleration_duration));
       result.SetVelocity(max_velocity);

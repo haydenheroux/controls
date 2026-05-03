@@ -1,13 +1,14 @@
 #include <iostream>
+
+#include "Loop.hh"
 #include "au/power_aliases.hh"
 #include "au/units/seconds.hh"
-#include "pubsub/zmq.hh"
-#include "simulator/AffineSystemSim.hh"
-#include "system/Elevator.hh"
-#include "Loop.hh"
 #include "au/units/volts.hh"
 #include "input.hh"
+#include "pubsub/zmq.hh"
 #include "robot.hh"
+#include "simulator/AffineSystemSim.hh"
+#include "system/Elevator.hh"
 #include "trajectory.hh"
 #include "units.hh"
 
@@ -16,7 +17,8 @@ using State = PositionVelocityState;
 using Input = VoltageInput;
 
 int main() {
-  Elevator elevator{GEAR_RATIO, DRUM_RADIUS, MASS, MAX_CURRENT, TOTAL_TRAVEL, MOTORS};
+  Elevator elevator{GEAR_RATIO,  DRUM_RADIUS,  MASS,
+                    MAX_CURRENT, TOTAL_TRAVEL, MOTORS};
 
   const auto kTimeStep = au::milli(au::seconds)(16.67);
   Loop loop{kTimeStep};
@@ -27,9 +29,10 @@ int main() {
   auto B = elevator.ContinuousInputMatrix<State, Input>();
 
   // Gravity should be expressed as a time-derivative (xdot) not as a `State`.
-  // Construct the continuous constant term as [0; g] where g is the gravitational
-  // acceleration (affects the velocity derivative only).
-  auto gravity_acc = (au::meters / au::squared(au::seconds))(kGravity.in(au::meters / au::squared(au::seconds)));
+  // Construct the continuous constant term as [0; g] where g is the
+  // gravitational acceleration (affects the velocity derivative only).
+  auto gravity_acc = (au::meters / au::squared(au::seconds))(
+      kGravity.in(au::meters / au::squared(au::seconds)));
   StateVector<State::Dimension> gravity_dot;
   gravity_dot << 0.0, gravity_acc.in(au::meters / au::squared(au::seconds));
   AffineSystemSim<State, Input> sim{A, B, gravity_dot, kTimeStep};
@@ -38,8 +41,10 @@ int main() {
   auto kP = (au::volts / au::meter)(191.2215);
   auto kD = (au::volts / (au::meters / au::second))(4.811);
   Eigen::Matrix<double, State::Dimension, 1> gains;
-  gains << kP.in(au::volts / au::meter), kD.in(au::volts / (au::meters / au::second));
-  auto K = MakeGainMatrix<Input::Dimension, State::Dimension, State::Dimension>(gains);
+  gains << kP.in(au::volts / au::meter),
+      kD.in(au::volts / (au::meters / au::second));
+  auto K = MakeGainMatrix<Input::Dimension, State::Dimension, State::Dimension>(
+      gains);
 
   State top{TOTAL_TRAVEL};
   State bottom{au::meters(0)};
@@ -48,11 +53,18 @@ int main() {
   TrapezoidTrajectory<units::DisplacementUnit> profile{elevator};
   TrapezoidTrajectoryDurations bottom_to_top = profile.Durations(bottom, top);
 
-  std::cout << "Max velocity: " << profile.max_velocity.in(au::meters / au::second) << " m/s" << std::endl;
-  std::cout << "Max acceleration: " << profile.max_acceleration.in(au::meters / au::squared(au::second)) << " m/s^2" << std::endl;
-  std::cout << "Bottom: " << bottom.Position().in(au::meters) << " m" << std::endl;
+  std::cout << "Max velocity: "
+            << profile.max_velocity.in(au::meters / au::second) << " m/s"
+            << std::endl;
+  std::cout << "Max acceleration: "
+            << profile.max_acceleration.in(au::meters / au::squared(au::second))
+            << " m/s^2" << std::endl;
+  std::cout << "Bottom: " << bottom.Position().in(au::meters) << " m"
+            << std::endl;
   std::cout << "Top: " << top.Position().in(au::meters) << " m" << std::endl;
-  std::cout << "Bottom to top timing: " << bottom_to_top.total_duration.in(au::seconds) << " s" << std::endl;
+  std::cout << "Bottom to top timing: "
+            << bottom_to_top.total_duration.in(au::seconds) << " s"
+            << std::endl;
 
   State reference = bottom;
   State goal = top;
@@ -75,7 +87,8 @@ int main() {
     // auto limited_voltage =
     //     LimitVoltage(elevator, sim.State().Velocity(), input.Voltage());
     sim.Update(input);
-    auto clamped_state = sim.State().PositionClamped(au::meters(0), elevator.max_travel);
+    auto clamped_state =
+        sim.State().PositionClamped(au::meters(0), elevator.max_travel);
     sim.SetState(clamped_state);
 
     publisher.Publish(loop.LastTickTime(), sim.State());

@@ -13,7 +13,8 @@ LinearVelocityCoefficient Elevator::VelocityCoefficient() const {
           motor.angular_velocity_constant_);
 }
 
-quantities::LinearVoltageCoefficient Elevator::GetLinearVoltageCoefficient() const {
+quantities::LinearVoltageCoefficient Elevator::GetLinearVoltageCoefficient()
+    const {
   return (gear_ratio * motor.torque_constant_) /
          (motor.resistance_ * mass * drum_radius);
 }
@@ -32,8 +33,10 @@ LinearAcceleration Elevator::Acceleration(LinearVelocity velocity,
 }
 
 AngularAcceleration Elevator::Acceleration(AngularVelocity velocity,
-                                          Voltage voltage) const {
-  return Acceleration(velocity / au::radians(1) * drum_radius / gear_ratio, voltage) / drum_radius * au::radians(1);
+                                           Voltage voltage) const {
+  return Acceleration(velocity / au::radians(1) * drum_radius / gear_ratio,
+                      voltage) /
+         drum_radius * au::radians(1);
 }
 
 quantities::Force Elevator::Force(LinearVelocity velocity,
@@ -67,24 +70,27 @@ quantities::Force Elevator::Force(LinearVelocity velocity,
  * `ContinuousInputMatrix()` inline method.
  */
 
- // Dynamics specialization for PositionVelocityState + VoltageInput.
- // Return the canonical time-derivative wrapper (xdot) for the PositionVelocityState.
- // Delegate to the MotorSystemAdapter (stored lazily) to avoid duplicating logic
- // and to avoid re-creating the adapter on every call.
- template <>
- TimeDerivative<PositionVelocityState> Elevator::Dynamics<PositionVelocityState, VoltageInput>(
-     const PositionVelocityState &x, const VoltageInput &u) const {
-   return MakeMotorTranslationalSystemAdapter(*this).Dynamics(x, u);
- }
-
-// Linearize specialization: return continuous-time (A, B) at the provided point.
-// For this (simple) motor-driven elevator the continuous A and B are independent
-// of the state and input, so we can reuse the existing ContinuousSystem/ContinuousInput.
+// Dynamics specialization for PositionVelocityState + VoltageInput.
+// Return the canonical time-derivative wrapper (xdot) for the
+// PositionVelocityState. Delegate to the MotorSystemAdapter (stored lazily) to
+// avoid duplicating logic and to avoid re-creating the adapter on every call.
 template <>
-std::pair<SystemMatrix<PositionVelocityState::Dimension>,
-          InputMatrix<PositionVelocityState::Dimension, VoltageInput::Dimension>>
+TimeDerivative<PositionVelocityState>
+Elevator::Dynamics<PositionVelocityState, VoltageInput>(
+    const PositionVelocityState& x, const VoltageInput& u) const {
+  return MakeMotorTranslationalSystemAdapter(*this).Dynamics(x, u);
+}
+
+// Linearize specialization: return continuous-time (A, B) at the provided
+// point. For this (simple) motor-driven elevator the continuous A and B are
+// independent of the state and input, so we can reuse the existing
+// ContinuousSystem/ContinuousInput.
+template <>
+std::pair<
+    SystemMatrix<PositionVelocityState::Dimension>,
+    InputMatrix<PositionVelocityState::Dimension, VoltageInput::Dimension>>
 Elevator::Linearize<PositionVelocityState, VoltageInput>(
-    const PositionVelocityState &x, const VoltageInput &u) const {
+    const PositionVelocityState& x, const VoltageInput& u) const {
   return MakeMotorTranslationalSystemAdapter(*this).Linearize(x, u);
 }
 

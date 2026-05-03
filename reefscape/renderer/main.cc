@@ -1,6 +1,6 @@
 #include "au/prefix.hh"
-#include "au/units/inches.hh"
 #include "au/units/degrees.hh"
+#include "au/units/inches.hh"
 #include "pubsub/zmq.hh"
 #include "raylib.h"
 #include "render.hh"
@@ -29,10 +29,16 @@ int main() {
 
     Render(camera, state.Position());
     writer.Reset();
-    writer.Write("Position: " + std::to_string(state.Position().in(au::meters)) + "m");
-    writer.Write("Velocity: " + std::to_string(state.Velocity().in(au::meters / au::second)) + "m/s");
-    writer.Write("Sim Time: " + std::to_string(sim_time.in(au::micro(au::seconds))) + "us");
-    writer.Write("Draw Time: " + std::to_string(elapsed_time.in(au::milli(au::seconds))) + "ms");
+    writer.Write(
+        "Position: " + std::to_string(state.Position().in(au::meters)) + "m");
+    writer.Write("Velocity: " +
+                 std::to_string(state.Velocity().in(au::meters / au::second)) +
+                 "m/s");
+    writer.Write("Sim Time: " +
+                 std::to_string(sim_time.in(au::micro(au::seconds))) + "us");
+    writer.Write("Draw Time: " +
+                 std::to_string(elapsed_time.in(au::milli(au::seconds))) +
+                 "ms");
     writer.Write("Comms: ZMQ");
   }
 

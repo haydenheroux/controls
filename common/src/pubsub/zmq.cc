@@ -1,6 +1,8 @@
 #include "pubsub/zmq.hh"
+
 #include <utility>
 #include <zmq.hpp>
+
 #include "au/prefix.hh"
 #include "units.hh"
 
@@ -16,13 +18,12 @@ void ZMQPublisher::Publish(Time time, PositionVelocityState state) {
   double time_us = time.in(au::micro(au::seconds));
   double position_m = state.Position().in(au::meters);
   double velocity_mps = state.Velocity().in((au::meters / au::seconds));
-  socket.send(zmq::buffer({time_us, position_m, velocity_mps}), zmq::send_flags::none);
+  socket.send(zmq::buffer({time_us, position_m, velocity_mps}),
+              zmq::send_flags::none);
 }
 
 ZMQSubscriber::ZMQSubscriber(const std::string& endpoint)
-  : context(1),
-    socket(context, zmq::socket_type::sub)
-{
+    : context(1), socket(context, zmq::socket_type::sub) {
   socket.connect(endpoint);
   socket.set(zmq::sockopt::subscribe, "");
 }
@@ -39,7 +40,8 @@ std::pair<Time, PositionVelocityState> ZMQSubscriber::Subscribe() {
   const double* data = static_cast<const double*>(message.data());
 
   auto time = (au::micro(au::seconds))(data[0]);
-  auto state = PositionVelocityState{au::meters(data[1]), (au::meters / au::second)(data[2])};
+  auto state = PositionVelocityState{au::meters(data[1]),
+                                     (au::meters / au::second)(data[2])};
   return std::make_pair(time, state);
 }
 

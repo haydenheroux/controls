@@ -12,5 +12,5 @@ namespace reefscape {
 
 // Intentionally empty — `system/Concepts.hh` provides the `System` concept and
 // other system-related concept declarations.
-  
+
 }  // namespace reefscape

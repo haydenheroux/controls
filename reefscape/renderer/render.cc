@@ -14,14 +14,14 @@ namespace reefscape {
 const Color k5112Green = {0, 167, 74, 255};
 const Color k5112GreenShadow = {0, 148, 91, 255};
 
-void Init(const Window &window) {
+void Init(const Window& window) {
   SetConfigFlags(FLAG_MSAA_4X_HINT);
   InitWindow(window.width.in(pixels), window.height.in(pixels),
              window.title.c_str());
   SetTargetFPS(window.fps);
 }
 
-Camera InitCamera(const UnitVector3 &position, const UnitVector3 &target,
+Camera InitCamera(const UnitVector3& position, const UnitVector3& target,
                   Angle fov) {
   Camera camera;
   camera.position.x = position.x.in(raylib_unit);
@@ -250,7 +250,7 @@ void DrawRobot(Displacement elevator_position) {
   DrawCarriage(carriage_origin);
 }
 
-void Render(const Camera &camera, Displacement elevator_position) {
+void Render(const Camera& camera, Displacement elevator_position) {
   BeginDrawing();
   ClearBackground(WHITE);
   BeginMode3D(camera);
@@ -260,11 +260,11 @@ void Render(const Camera &camera, Displacement elevator_position) {
   EndDrawing();
 }
 
-Vector3 SpinZ(const Vector3 &position, Angle angle) {
+Vector3 SpinZ(const Vector3& position, Angle angle) {
   return Vector3RotateByAxisAngle(position, {0, 1, 0}, angle.in(au::radians));
 }
 
-void TextWriter::Write(const std::string &text) {
+void TextWriter::Write(const std::string& text) {
   DrawText(text.c_str(), 0, line_number * font_size, font_size, color);
   line_number++;
 }
