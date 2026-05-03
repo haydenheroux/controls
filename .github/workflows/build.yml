@@ -1,0 +1,20 @@
+name: Build Check
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build g++ git libeigen3-dev libzmq3-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxxf86vm-dev libgl1-mesa-dev libxi-dev
+
+      - name: Configure
+        run: cmake -B build -G Ninja
+
+      - name: Build
+        run: cmake --build build

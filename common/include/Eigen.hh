@@ -22,8 +22,6 @@ concept SupportsVectorOperations =
       { a - b } -> std::convertible_to<T>;
       { a + vec } -> std::convertible_to<T>;
       { a - vec } -> std::convertible_to<T>;
-      { scalar * a } -> std::convertible_to<T>;
-      { a * scalar } -> std::convertible_to<T>;
     };
 
 template <typename Derived, int Dim>
