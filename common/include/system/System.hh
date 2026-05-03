@@ -1,23 +1,16 @@
 #pragma once
 
-#include "Eigen.hh"
-#include <concepts>
+// Thin wrapper header for system concepts.
+//
+// The real concept declarations live in `system/Concepts.hh`. This header
+// preserves the historical include path (`system/System.hh`) so callers that
+// include `system/System.hh` will continue to receive the system-related
+// concept definitions without change.
+#include "system/Concepts.hh"
 
 namespace reefscape {
 
-/*
- * Minimal System concept
- *
- * A System is any type that exposes a member:
- *   StateType Dynamics(const StateType& x, const InputType& u) const;
- *
- * The concept checks only that the member exists and that its return type is
- * convertible to the declared StateType. Keep this concept intentionally small
- * so various tools and compilation configurations can parse it reliably.
- */
-template <typename SystemType, typename StateType, typename InputType>
-concept System = requires(const SystemType &sys, const StateType &x, const InputType &u) {
-  { sys.Dynamics(x, u) } -> std::convertible_to<StateType>;
-};
-
+// Intentionally empty — `system/Concepts.hh` provides the `System` concept and
+// other system-related concept declarations.
+  
 }  // namespace reefscape

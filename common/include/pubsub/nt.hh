@@ -2,8 +2,8 @@
 
 #include "ntcore_c.h"
 #include "ntcore_cpp.h"
-#include "pubsub.hh"
-#include "state.hh"
+#include "concepts.hh"
+#include "state/PositionVelocityState.hh"
 
 namespace reefscape {
 
@@ -43,5 +43,10 @@ inline NTSubscriber GetSubscriber<NTSubscriber>() {
   nt::SetServer(client, "127.0.0.1", 5810);
   return NTSubscriber{client};
 }
+
+static_assert(Publisher<NTPublisher, PositionVelocityState>,
+              "NTPublisher must satisfy the Publisher concept for PositionVelocityState");
+static_assert(Subscriber<NTSubscriber, PositionVelocityState>,
+              "NTSubscriber must satisfy the Subscriber concept for PositionVelocityState");
 
 };  // namespace reefscape

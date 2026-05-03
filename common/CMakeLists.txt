@@ -1,6 +1,6 @@
 project(common)
 
-file(GLOB common_src src/system/Arm.cc src/system/Elevator.cc src/nt_pubsub.cc src/zmq_pubsub.cc)
+file(GLOB common_src src/system/Arm.cc src/system/Elevator.cc src/pubsub/nt.cc src/pubsub/zmq.cc)
 
 add_library(common ${common_src})
 

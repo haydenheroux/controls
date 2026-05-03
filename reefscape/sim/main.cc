@@ -1,6 +1,7 @@
 #include <iostream>
 #include "au/power_aliases.hh"
 #include "au/units/seconds.hh"
+#include "pubsub/zmq.hh"
 #include "simulator/AffineSystemSim.hh"
 #include "system/Elevator.hh"
 #include "Loop.hh"
@@ -9,7 +10,6 @@
 #include "robot.hh"
 #include "trajectory.hh"
 #include "units.hh"
-#include "zmq_pubsub.hh"
 
 using namespace reefscape;
 using State = PositionVelocityState;
@@ -26,19 +26,20 @@ int main() {
   auto A = elevator.ContinuousSystemMatrix<State>();
   auto B = elevator.ContinuousInputMatrix<State, Input>();
 
-  // TODO(hayden): Encodes gravity as `State` when it should be `TimeDerivative<State>`
-  LinearVelocity gravityVelocity = (au::meters / au::second)(kGravity.in(au::meters / au::squared(au::seconds)));
-  State gravity = State{au::meters(0), gravityVelocity};
+  // Gravity should be expressed as a time-derivative (xdot) not as a `State`.
+  // Construct the continuous constant term as [0; g] where g is the gravitational
+  // acceleration (affects the velocity derivative only).
+  auto gravity_acc = (au::meters / au::squared(au::seconds))(kGravity.in(au::meters / au::squared(au::seconds)));
+  StateVector<State::Dimension> gravity_dot;
+  gravity_dot << 0.0, gravity_acc.in(au::meters / au::squared(au::seconds));
+  AffineSystemSim<State, Input> sim{A, B, gravity_dot, kTimeStep};
 
-  AffineSystemSim<State, Input> sim{A, B, gravity.vector, kTimeStep};
-
-  // TODO(hayden): Create a diagonal matrix from State -> Input given a gain vector
   // TODO(hayden): Implement LQR for a given system to find the optimal K
   auto kP = (au::volts / au::meter)(191.2215);
   auto kD = (au::volts / (au::meters / au::second))(4.811);
-  Eigen::Matrix<double, Input::Dimension, State::Dimension> K;
-  K << kP.in(au::volts / au::meter),
-      kD.in(au::volts / (au::meters / au::second));
+  Eigen::Matrix<double, State::Dimension, 1> gains;
+  gains << kP.in(au::volts / au::meter), kD.in(au::volts / (au::meters / au::second));
+  auto K = MakeGainMatrix<Input::Dimension, State::Dimension, State::Dimension>(gains);
 
   State top{TOTAL_TRAVEL};
   State bottom{au::meters(0)};

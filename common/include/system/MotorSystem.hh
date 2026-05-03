@@ -1,58 +1,12 @@
 #pragma once
 
-#include <concepts>
-
-#include "Motor.hh"
-#include "au/fwd.hh"
-#include "au/math.hh"
-#include "units.hh"
-
-// Adapter support: to implement System concept for motor-driven displacement
-// systems we depend on the shape types used by the rest of the project.
-#include "state.hh"
 #include "input.hh"
-#include "Eigen.hh"
+#include "units.hh"
+#include "system/concepts.hh"
+#include "state/AngleVelocityState.hh"
+#include "state/PositionVelocityState.hh"
 
 namespace reefscape {
-
-/*
- * MotorSystem concept for ROTATIONAL systems (angle-based).
- * Requires GetAngularVoltageCoefficient() returning angular type.
- */
-template <typename S>
-concept RotaryMotorSystem = requires(const S& system,
-                                     quantities::AngularVelocity v,
-                                     quantities::Voltage u) {
-  { system.motor } -> std::convertible_to<Motor>;
-  { system.max_current } -> std::convertible_to<quantities::Current>;
-  { system.MotorVelocity(v) } -> std::convertible_to<quantities::AngularVelocity>;
-  { system.Acceleration(v, u) } -> std::convertible_to<quantities::AngularAcceleration>;
-  { system.VelocityCoefficient() } -> std::convertible_to<quantities::AngularVelocityCoefficient>;
-  { system.GetAngularVoltageCoefficient() } -> std::convertible_to<quantities::AngularVoltageCoefficient>;
-};
-
-/*
- * MotorSystem concept for TRANSLATIONAL systems (displacement-based).
- * Requires GetLinearVoltageCoefficient() returning linear type.
- */
-template <typename S>
-concept TranslationalMotorSystem = requires(const S& system,
-                                            quantities::LinearVelocity v,
-                                            quantities::Voltage u) {
-  { system.motor } -> std::convertible_to<Motor>;
-  { system.max_current } -> std::convertible_to<quantities::Current>;
-  { system.MotorVelocity(v) } -> std::convertible_to<quantities::AngularVelocity>;
-  { system.Acceleration(v, u) } -> std::convertible_to<quantities::LinearAcceleration>;
-  { system.VelocityCoefficient() } -> std::convertible_to<quantities::LinearVelocityCoefficient>;
-  { system.GetLinearVoltageCoefficient() } -> std::convertible_to<quantities::LinearVoltageCoefficient>;
-};
-
-/*
- * Unified MotorSystem concept - uses the appropriate specific concept based on U.
- */
-template <typename S, typename U>
-concept MotorSystem = (std::same_as<U, decltype(units::AngleUnit{})> && RotaryMotorSystem<S>) ||
-                     (std::same_as<U, decltype(units::DisplacementUnit{})> && TranslationalMotorSystem<S>);
 
 /*
  * Adapter for rotary / arm-like plants that operate on angle + angular velocity.
@@ -74,11 +28,11 @@ struct MotorRotarySystemAdapter {
     return MotorContinuousInputMatrix<MotorPlant, AngleVelocityState, VoltageInput>(plant);
   }
 
-  AngleVelocityState Dynamics(const AngleVelocityState &x, const VoltageInput &u) const {
+  TimeDerivative<AngleVelocityState> Dynamics(const AngleVelocityState &x, const VoltageInput &u) const {
     auto A = ContinuousSystemMatrix();
     auto B = ContinuousInputMatrix();
     StateVector<AngleVelocityState::Dimension> dx = A * x.vector + B * u.vector;
-    return AngleVelocityState{dx};
+    return TimeDerivative<AngleVelocityState>{dx};
   }
 
   std::pair<SystemMatrix<AngleVelocityState::Dimension>,
@@ -200,11 +154,11 @@ struct MotorTranslationalSystemAdapter {
     return MotorContinuousInputMatrix<MotorPlant, PositionVelocityState, VoltageInput>(plant);
   }
 
-  PositionVelocityState Dynamics(const PositionVelocityState &x, const VoltageInput &u) const {
+  TimeDerivative<PositionVelocityState> Dynamics(const PositionVelocityState &x, const VoltageInput &u) const {
     auto A = ContinuousSystemMatrix();
     auto B = ContinuousInputMatrix();
     StateVector<PositionVelocityState::Dimension> dx = A * x.vector + B * u.vector;
-    return PositionVelocityState{dx};
+    return TimeDerivative<PositionVelocityState>{dx};
   }
 
   std::pair<SystemMatrix<PositionVelocityState::Dimension>,
@@ -239,12 +193,12 @@ struct MotorSystemAdapter {
   }
 
   // Dynamics: compute xdot = A*x + B*u (using adapter helper methods)
-  PositionVelocityState Dynamics(const PositionVelocityState &x,
+  TimeDerivative<PositionVelocityState> Dynamics(const PositionVelocityState &x,
                                  const VoltageInput &u) const {
     auto A = ContinuousSystemMatrix();
     auto B = ContinuousInputMatrix();
     StateVector<PositionVelocityState::Dimension> dx = A * x.vector + B * u.vector;
-    return PositionVelocityState{dx};
+    return TimeDerivative<PositionVelocityState>{dx};
   }
 
   // Linearize: return continuous-time (A, B) matrices for controller design.

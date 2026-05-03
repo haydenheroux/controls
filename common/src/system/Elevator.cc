@@ -1,7 +1,6 @@
 #include "system/Elevator.hh"
 
 #include "input.hh"
-#include "state.hh"
 #include "system/MotorSystem.hh"
 #include "units.hh"
 
@@ -69,10 +68,11 @@ quantities::Force Elevator::Force(LinearVelocity velocity,
  */
 
  // Dynamics specialization for PositionVelocityState + VoltageInput.
+ // Return the canonical time-derivative wrapper (xdot) for the PositionVelocityState.
  // Delegate to the MotorSystemAdapter (stored lazily) to avoid duplicating logic
  // and to avoid re-creating the adapter on every call.
  template <>
- PositionVelocityState Elevator::Dynamics<PositionVelocityState, VoltageInput>(
+ TimeDerivative<PositionVelocityState> Elevator::Dynamics<PositionVelocityState, VoltageInput>(
      const PositionVelocityState &x, const VoltageInput &u) const {
    return MakeMotorTranslationalSystemAdapter(*this).Dynamics(x, u);
  }

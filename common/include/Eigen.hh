@@ -14,14 +14,16 @@ concept HasDimension = requires {
 };
 
 template <typename T>
-concept SupportsVectorOperations = HasDimension<T> && requires(T a, T b, double scalar, const Eigen::Vector<double, T::Dimension>& vec) {
-  { a + b } -> std::convertible_to<T>;
-  { a - b } -> std::convertible_to<T>;
-  { a + vec } -> std::convertible_to<T>;
-  { a - vec } -> std::convertible_to<T>;
-  { scalar * a } -> std::convertible_to<T>;
-  { a * scalar } -> std::convertible_to<T>;
-};
+concept SupportsVectorOperations =
+    HasDimension<T> &&
+    requires(T a, T b, double scalar, const Eigen::Vector<double, T::Dimension> &vec) {
+      { a + b } -> std::convertible_to<T>;
+      { a - b } -> std::convertible_to<T>;
+      { a + vec } -> std::convertible_to<T>;
+      { a - vec } -> std::convertible_to<T>;
+      { scalar * a } -> std::convertible_to<T>;
+      { a * scalar } -> std::convertible_to<T>;
+    };
 
 template <typename Derived, int Dim>
 class VectorBase {
@@ -100,9 +102,49 @@ template <int States, int Inputs>
   requires(States > Inputs)
 using InputLeftPseudoInverseMatrix = Eigen::Matrix<double, Inputs, States>;
 
-// TODO(hayden): "Matrices" is ambiguous
+// Convenience aliases for commonly-used matrix/matrix-pair shapes
+// NOTE(hayden): "Matrices" is ambiguous
 template <int States, int Inputs>
 using Matrices = std::pair<SystemMatrix<States>, InputMatrix<States, Inputs>>;
+
+// --- Time-derivative / dot aliases ---
+//
+// Provide a trait-based mechanism so specific State types can map to
+// canonical derivative wrapper types (e.g., PositionAccelerationState) while
+// allowing a sensible default. This avoids attempting to explicitly specialize
+// alias templates (which the language forbids).
+//
+// Default behaviour: TimeDerivative<State> == State
+// To customize for a particular State type, specialize TimeDerivativeOf<State>
+// (for example, in `state.hh`) like:
+//
+//   template <>
+//   struct TimeDerivativeOf<PositionVelocityState> {
+//     using type = PositionAccelerationState;
+//   };
+//
+// Aliases:
+//   TimeDerivative<State> -> typename TimeDerivativeOf<State>::type
+//   Dot<State>             -> TimeDerivative<State>
+//
+// NumericTimeDerivative<State> remains the raw Eigen vector type
+// (Eigen::Vector<double, State::Dimension>) for cases that need the plain
+// numeric representation rather than a wrapper.
+
+template <typename State>
+struct TimeDerivativeOf {
+  using type = State;
+};
+
+template <typename State>
+using TimeDerivative = typename TimeDerivativeOf<State>::type;
+
+template <typename State>
+using Dot = TimeDerivative<State>;
+
+// Explicit numeric/raw time-derivative when you need the plain Eigen vector.
+template <typename State>
+using NumericTimeDerivative = Eigen::Vector<double, State::Dimension>;
 
 template <int States, int Inputs>
 Matrices<States, Inputs> Discretize(Matrices<States, Inputs> &AcBc,
@@ -131,6 +173,23 @@ InputLeftPseudoInverseMatrix<States, Inputs> PseudoInverse(
   // Bc⁺ = (BcᵀBc)⁻¹Bcᵀ
   auto BcT = Bc.transpose();
   return (BcT * Bc).inverse() * BcT;
+}
+
+template <int Inputs, int States, int Gains>
+  requires(Gains == States)
+Eigen::Matrix<double, Inputs, States> MakeGainMatrix(
+    const Eigen::Matrix<double, Gains, 1>& gains) {
+  // Gain matrix K should map state (States x 1) -> input (Inputs x 1):
+  //   input = K * state
+  // so K must be (Inputs x States). Populate each column i with the scalar
+  // gain `gains[i]`. For Inputs>1 this replicates the scalar across the input
+  // channels for that state dimension (consistent fallback).
+  Eigen::Matrix<double, Inputs, States> result =
+      Eigen::Matrix<double, Inputs, States>::Zero();
+  for (int i = 0; i < States; ++i) {
+    result.col(i).setConstant(gains[i]);
+  }
+  return result;
 }
 
 };  // namespace reefscape

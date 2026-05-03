@@ -49,7 +49,7 @@ LinearVelocityCoefficient VelocityCoefficient() const;
   // VectorBase-derived wrappers (e.g., PositionVelocityState, VoltageInput).
   template <class State, class Input>
     requires HasDimension<State> && HasDimension<Input>
-  State Dynamics(const State &x, const Input &u) const;
+  TimeDerivative<State> Dynamics(const State &x, const Input &u) const;
 
   // Continuous-time linearization (optional capability)
   // Returns (A, B) continuous-time Jacobians at (x, u).

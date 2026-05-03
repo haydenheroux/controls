@@ -1,8 +1,8 @@
 #pragma once
 
 #include <zmq.hpp>
-#include "pubsub.hh"
-#include "state.hh"
+#include "pubsub/concepts.hh"
+#include "state/PositionVelocityState.hh"
 
 namespace reefscape {
 
@@ -34,5 +34,10 @@ template <>
 inline ZMQSubscriber GetSubscriber<ZMQSubscriber>() {
   return ZMQSubscriber{"ipc:///tmp/zmq.ipc"};
 }
+
+static_assert(Publisher<ZMQPublisher, PositionVelocityState>,
+              "ZMQPublisher must satisfy the Publisher concept for PositionVelocityState");
+static_assert(Subscriber<ZMQSubscriber, PositionVelocityState>,
+              "ZMQSubscriber must satisfy the Subscriber concept for PositionVelocityState");
 
 };  // namespace reefscape

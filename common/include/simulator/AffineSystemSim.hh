@@ -1,6 +1,9 @@
 #pragma once
 
 #include "Eigen.hh"
+#include "input.hh"
+#include "state/PositionVelocityState.hh"
+#include "simulator/concepts.hh"
 #include "units.hh"
 
 namespace reefscape {
@@ -64,3 +67,10 @@ class AffineSystemSim {
 };
 
 }  // namespace reefscape
+
+template <typename S, typename I>
+inline constexpr bool AffineSystemSim_satisfies_simulator_v =
+    reefscape::Simulator<reefscape::AffineSystemSim<S, I>, S, I>;
+
+static_assert(AffineSystemSim_satisfies_simulator_v<reefscape::PositionVelocityState, reefscape::VoltageInput>,
+              "AffineSystemSim must satisfy the Simulator concept for PositionVelocityState/VoltageInput");

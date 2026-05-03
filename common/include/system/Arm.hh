@@ -3,8 +3,6 @@
 #include "Eigen.hh"
 #include "Motor.hh"
 #include "system/MotorSystem.hh"
-#include "state.hh"
-#include "input.hh"
 #include "units.hh"
 
 namespace reefscape {
@@ -57,7 +55,7 @@ struct Arm {
   // concrete AngleVelocityState / VoltageInput pairing.
   template <class State, class Input>
     requires HasDimension<State> && HasDimension<Input>
-  State Dynamics(const State &x, const Input &u) const;
+  TimeDerivative<State> Dynamics(const State &x, const Input &u) const;
 
   // Continuous-time linearization (optional capability)
   template <class State, class Input>

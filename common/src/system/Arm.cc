@@ -44,7 +44,7 @@ quantities::Torque Arm::Torque(AngularVelocity velocity,
 // Delegate to the Arm's rotary adapter (MotorRotarySystemAdapter) to avoid
 // duplicating logic and to keep continuous-time A/B computation centralized.
 template <>
-AngleVelocityState Arm::Dynamics<AngleVelocityState, VoltageInput>(
+TimeDerivative<AngleVelocityState> Arm::Dynamics<AngleVelocityState, VoltageInput>(
     const AngleVelocityState &x, const VoltageInput &u) const {
   return MakeMotorRotarySystemAdapter(*this).Dynamics(x, u);
 }

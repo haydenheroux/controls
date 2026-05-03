@@ -1,7 +1,6 @@
 #pragma once
 
 #include "system/MotorSystem.hh"
-#include "state.hh"
 #include "units.hh"
 
 namespace reefscape {

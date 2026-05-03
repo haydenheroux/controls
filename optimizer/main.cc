@@ -3,11 +3,8 @@
 #include "system/MotorSystem.hh"
 #include "au/io.hh"
 #include "system/Elevator.hh"
-#include "au/units/inches.hh"
 #include "au/units/meters.hh"
-#include "au/units/pounds_mass.hh"
 #include "robot.hh"
-#include "state.hh"
 #include "trajectory.hh"
 #include "units.hh"
 
