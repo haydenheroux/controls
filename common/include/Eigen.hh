@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Eigen/Core>
+#include <concepts>
 #include <unsupported/Eigen/MatrixFunctions>
 #include <utility>
 
@@ -14,7 +15,8 @@ concept HasDimension = requires {
 };
 
 template <typename T>
-concept SupportsVectorOperations = HasDimension<T> && requires(T a, T b, double scalar, const Eigen::Vector<double, T::Dimension>& vec) {
+concept SupportsVectorOperations = requires(
+    T a, T b, double scalar, const Eigen::Vector<double, T::Dimension>& vec) {
   { a + b } -> std::convertible_to<T>;
   { a - b } -> std::convertible_to<T>;
   { a + vec } -> std::convertible_to<T>;
@@ -22,6 +24,9 @@ concept SupportsVectorOperations = HasDimension<T> && requires(T a, T b, double 
   { scalar * a } -> std::convertible_to<T>;
   { a * scalar } -> std::convertible_to<T>;
 };
+
+template <typename T>
+concept Vector = HasDimension<T> && SupportsVectorOperations<T>;
 
 template <typename Derived, int Dim>
 class VectorBase {
@@ -71,7 +76,8 @@ class VectorBase {
     return result;
   }
 
-  friend Derived operator+(const Eigen::Vector<double, Dim>& vec, const Derived& derived) {
+  friend Derived operator+(const Eigen::Vector<double, Dim>& vec,
+                           const Derived& derived) {
     return derived + vec;
   }
 
@@ -100,19 +106,35 @@ template <int States, int Inputs>
   requires(States > Inputs)
 using InputLeftPseudoInverseMatrix = Eigen::Matrix<double, Inputs, States>;
 
+// Convenience aliases for commonly-used matrix/matrix-pair shapes
+// TODO(hayden): "Matrices" is ambiguous
 template <int States, int Inputs>
 using Matrices = std::pair<SystemMatrix<States>, InputMatrix<States, Inputs>>;
 
+template <typename State>
+struct TimeDerivativeOf {
+  using type = State;
+};
+
+template <typename State>
+using TimeDerivative = typename TimeDerivativeOf<State>::type;
+
+// Define `Dot` as an alias for `TimeDerivative` so library users can write
+// `AccelerationVector = Dot<VelocityVector>`
+template <typename State>
+using Dot = TimeDerivative<State>;
+
+// Discretizes a pair of continuous system-input matrices for the sample period
 template <int States, int Inputs>
-Matrices<States, Inputs> Discretize(Matrices<States, Inputs> &AcBc,
+Matrices<States, Inputs> Discretize(Matrices<States, Inputs>& Ac_Bc,
                                     quantities::Time sample_period) {
   using BlockMatrix = Eigen::Matrix<double, States + Inputs, States + Inputs>;
 
   // M = ⎡ Ac Bc ⎤
   //     ⎣ 0  0  ⎦
   BlockMatrix M;
-  M.template block<States, States>(0, 0) = AcBc.first;
-  M.template block<States, Inputs>(0, States) = AcBc.second;
+  M.template block<States, States>(0, 0) = Ac_Bc.first;
+  M.template block<States, Inputs>(0, States) = Ac_Bc.second;
   M.template block<Inputs, States + Inputs>(States, 0).setZero();
 
   // ϕ = ⎡ Ad Bd ⎤
@@ -124,12 +146,27 @@ Matrices<States, Inputs> Discretize(Matrices<States, Inputs> &AcBc,
   return std::make_pair(Ad, Bd);
 }
 
+// Calculates the left pseudo-inverse for the continuous input matrix
 template <int States, int Inputs>
 InputLeftPseudoInverseMatrix<States, Inputs> PseudoInverse(
-    const InputMatrix<States, Inputs> &Bc) {
+    const InputMatrix<States, Inputs>& Bc) {
   // Bc⁺ = (BcᵀBc)⁻¹Bcᵀ
   auto BcT = Bc.transpose();
   return (BcT * Bc).inverse() * BcT;
+}
+
+// Constructs a gain matrix mapping from states vectors to input vectors.
+// Simplifies constructing feedback controllers, where state vectors represent
+// error between a reference and current state.
+template <int Inputs, int States>
+Eigen::Matrix<double, Inputs, States> MakeGainMatrix(
+    const Eigen::Matrix<double, States, 1>& gains) {
+  Eigen::Matrix<double, Inputs, States> result =
+      Eigen::Matrix<double, Inputs, States>::Zero();
+  for (int i = 0; i < States; ++i) {
+    result.col(i).setConstant(gains[i]);
+  }
+  return result;
 }
 
 };  // namespace reefscape

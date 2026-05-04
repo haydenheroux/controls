@@ -14,7 +14,7 @@ struct Window {
   int fps;
 };
 
-void Init(const Window &window);
+void Init(const Window& window);
 
 struct UnitVector3 {
   Displacement x;
@@ -22,12 +22,12 @@ struct UnitVector3 {
   Displacement z;
 };
 
-Camera InitCamera(const UnitVector3 &position, const UnitVector3 &target,
+Camera InitCamera(const UnitVector3& position, const UnitVector3& target,
                   Angle fov);
 
-void Render(const Camera &camera, Displacement elevator_position);
+void Render(const Camera& camera, Displacement elevator_position);
 
-Vector3 SpinZ(const Vector3 &position, Angle angle);
+Vector3 SpinZ(const Vector3& position, Angle angle);
 
 struct TextWriter {
   unsigned int line_number = 0;
@@ -35,7 +35,7 @@ struct TextWriter {
   Color color = BLACK;
 
   void Reset() { line_number = 0; };
-  void Write(const std::string &text);
+  void Write(const std::string& text);
 };
 
 };  // namespace reefscape

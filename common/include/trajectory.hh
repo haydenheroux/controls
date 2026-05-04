@@ -1,7 +1,9 @@
 #pragma once
 
-#include "MotorSystem.hh"
-#include "state.hh"
+#include "state/PositionVelocityState.hh"
+#include "state/concepts.hh"
+#include "system/motor/MotorSystem.hh"
+#include "system/motor/concepts.hh"
 #include "units.hh"
 
 namespace reefscape {
@@ -24,9 +26,11 @@ struct TrapezoidTrajectory {
       : max_velocity(MaximumVelocity<System, NativeUnit>(system)),
         max_acceleration(MaximumAcceleration<System, NativeUnit>(system)) {}
 
-  TrapezoidTrajectoryDurations Durations(PositionVelocityState state,
-                                         PositionVelocityState goal) {
-    // TODO Verify that the calculated durations are correct
+  // TODO(hayden): Make applicable to both rotary & linear systems
+  template <typename State>
+    requires HasPositionVelocity<State, NativeUnit>
+  TrapezoidTrajectoryDurations Durations(State state, State goal) {
+    // TODO(hayden): Verify that the calculated durations are correct
     TrapezoidTrajectoryDurations durations;
 
     auto start_time = state.Velocity() / max_acceleration;
@@ -48,26 +52,28 @@ struct TrapezoidTrajectory {
     durations.acceleration_duration = acceleration_time - start_time;
     durations.cruise_duration = cruise_distance / max_velocity;
     durations.deceleration_duration = acceleration_time - end_time;
-    durations.total_duration = durations.acceleration_duration + durations.cruise_duration + durations.deceleration_duration;
+    durations.total_duration = durations.acceleration_duration +
+                               durations.cruise_duration +
+                               durations.deceleration_duration;
     return durations;
   }
 
-  // TODO(hayden): Generate trajectories in NativeUnit
-  PositionVelocityState Calculate(quantities::Time time_step,
-                                  PositionVelocityState state,
-                                  PositionVelocityState goal) {
+  template <typename State>
+    requires Vector<State> && HasPositionVelocity<State, NativeUnit>
+  State Calculate(quantities::Time time_step, State state, State goal) {
     // NOTE(hayden): Algorithm assumes positive motion
     bool flip = goal.Position() < state.Position();
     if (flip) {
-      state.vector = -1 * state.vector;
-      goal.vector = -1 * goal.vector;
+      state = -1 * state;
+      goal = -1 * goal;
     }
 
     if (state.Velocity() > max_velocity) {
       state.SetVelocity(max_velocity);
     }
 
-    PositionVelocityState result{state};
+    // TODO(hayden): Ensure that `State` can be constructed from itself
+    State result{state};
 
     TrapezoidTrajectoryDurations durations = Durations(state, goal);
 
@@ -76,10 +82,12 @@ struct TrapezoidTrajectory {
           result.Position() +
           (state.Velocity() + 0.5 * time_step * max_acceleration) * time_step);
       result.SetVelocity(result.Velocity() + time_step * max_acceleration);
-    } else if (time_step <= durations.acceleration_duration + durations.cruise_duration) {
+    } else if (time_step <=
+               durations.acceleration_duration + durations.cruise_duration) {
       result.SetPosition(
           state.Position() +
-          (state.Velocity() + 0.5 * durations.acceleration_duration * max_acceleration) *
+          (state.Velocity() +
+           0.5 * durations.acceleration_duration * max_acceleration) *
               durations.acceleration_duration +
           max_velocity * (time_step - durations.acceleration_duration));
       result.SetVelocity(max_velocity);
@@ -94,7 +102,7 @@ struct TrapezoidTrajectory {
     }
 
     if (flip) {
-      result = result * -1.0;
+      result = -1 * result;
     }
 
     return result;

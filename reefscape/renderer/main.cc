@@ -1,16 +1,15 @@
-#include "au/units/inches.hh"
+#include "au/prefix.hh"
 #include "au/units/degrees.hh"
-#include "nt_pubsub.hh"
+#include "au/units/inches.hh"
+#include "pubsub/zmq.hh"
 #include "raylib.h"
 #include "render.hh"
 #include "render_units.hh"
-#include "state.hh"
-#include "zmq_pubsub.hh"
 
 using namespace reefscape;
 
 int main() {
-  auto subscriber = GetSubscriber<NTSubscriber>();
+  auto subscriber = GetSubscriber<ZMQSubscriber>();
 
   Init({pixels(360.0), pixels(640.0), "Reefscape Elevator Simulator", 60});
 
@@ -26,12 +25,21 @@ int main() {
     auto elapsed_time = au::seconds(GetFrameTime());
     camera.position = SpinZ(camera.position, camera_omega * elapsed_time);
 
-    auto state = subscriber.Subscribe();
+    auto [sim_time, state] = subscriber.Subscribe();
 
     Render(camera, state.Position());
     writer.Reset();
-    writer.Write(std::to_string(state.Position().in(au::meters)) + "m");
-    writer.Write(std::to_string(state.Velocity().in(au::meters / au::second)) + "m/s");
+    writer.Write(
+        "Position: " + std::to_string(state.Position().in(au::meters)) + "m");
+    writer.Write("Velocity: " +
+                 std::to_string(state.Velocity().in(au::meters / au::second)) +
+                 "m/s");
+    writer.Write("Sim Time: " +
+                 std::to_string(sim_time.in(au::micro(au::seconds))) + "us");
+    writer.Write("Draw Time: " +
+                 std::to_string(elapsed_time.in(au::milli(au::seconds))) +
+                 "ms");
+    writer.Write("Comms: ZMQ");
   }
 
   CloseWindow();

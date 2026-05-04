@@ -1,41 +1,17 @@
 #pragma once
 
-#include <concepts>
-
-#include "Motor.hh"
-#include "au/fwd.hh"
-#include "au/math.hh"
+#include "input/VoltageInput.hh"
+#include "state/PositionVelocityState.hh"
+#include "system/concepts.hh"
 #include "units.hh"
 
 namespace reefscape {
 
-template <typename S, typename U>
-concept MotorSystem = requires(const S& system,
-                               au::QuantityD<units::Velocity<U>> v,
-                               quantities::Voltage u) {
-  // NOTE(hayden): std::convertible_to is used here to ignore constness
-  { system.motor } -> std::convertible_to<Motor>;
-  { system.max_current } -> std::convertible_to<quantities::Current>;
-  // TODO(hayden): Express this requirement in terms of au:: instead of units::
-  { system.MotorVelocity(v) } -> std::same_as<quantities::AngularVelocity>;
-  {
-    system.Acceleration(v, u)
-  } -> std::same_as<au::QuantityD<units::Acceleration<U>>>;
-  {
-    system.VelocityCoefficient()
-  } -> std::same_as<
-      au::QuantityD<decltype(units::Acceleration<U>{} / units::Velocity<U>{})>>;
-  {
-    system.VoltageCoefficient()
-  } -> std::same_as<
-      au::QuantityD<decltype(units::Acceleration<U>{} / units::VoltageUnit{})>>;
-};
-
 template <typename System, typename NativeUnit>
   requires MotorSystem<System, NativeUnit>
-au::QuantityD<decltype(NativeUnit{} / units::TimeUnit{})> MaximumVelocity(
+au::QuantityD<units::Velocity<NativeUnit>> MaximumVelocity(
     const System& system) {
-  // Maximize ω with dω/dt = (velocity_coefficient)·ω +
+  // NOTE(hayden): Maximize ω with dω/dt = (velocity_coefficient)·ω +
   // (voltage_coefficient)·(motor.nominal_voltage)
   return -1 * system.motor.nominal_voltage_ * system.VoltageCoefficient() /
          system.VelocityCoefficient();

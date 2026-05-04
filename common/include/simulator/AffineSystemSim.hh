@@ -1,7 +1,9 @@
 #pragma once
 
 #include "Eigen.hh"
-#include "Elevator.hh"
+#include "input/VoltageInput.hh"
+#include "simulator/concepts.hh"
+#include "state/PositionVelocityState.hh"
 #include "units.hh"
 
 namespace reefscape {
@@ -9,7 +11,7 @@ namespace reefscape {
 using namespace quantities;
 
 template <class StateType, class InputType>
-  requires SupportsVectorOperations<StateType> && SupportsVectorOperations<InputType>
+  requires Vector<StateType> && Vector<InputType>
 class AffineSystemSim {
   static constexpr int States = StateType::Dimension;
   static constexpr int Inputs = InputType::Dimension;
@@ -17,10 +19,10 @@ class AffineSystemSim {
  public:
   AffineSystemSim(SystemMatrix<States> continuous_system,
                   InputMatrix<States, Inputs> continuous_input,
-                  StateVector<States> continuous_constant, Time time_step)
+                  Dot<StateType> continuous_constant, Time time_step)
       : continuous_system_(continuous_system),
         continuous_input_(continuous_input),
-        continuous_constant_(continuous_constant),
+        continuous_constant_(continuous_constant.vector),
         state_(),
         input_() {
     auto continuous_matrices =
@@ -33,16 +35,6 @@ class AffineSystemSim {
                               continuous_constant_;
   }
 
-  AffineSystemSim(const Elevator &elevator, LinearAcceleration gravity,
-                  Time time_step)
-      : AffineSystemSim(
-            elevator.ContinuousSystemMatrix<StateType>(),
-            elevator.ContinuousInputMatrix<StateType, InputType>(),
-            // TODO(hayden): This isn't compatible with other state types
-            StateVector<States>{0,
-                                gravity.in(au::meters / squared(au::second))},
-            time_step) {}
-
   void Update(InputType input) {
     input_ = input.vector;
     state_ = discrete_system_ * state_ + discrete_input_ * input_ +
@@ -51,9 +43,7 @@ class AffineSystemSim {
 
   StateType State() const { return StateType{state_}; }
 
-  void SetState(StateType state) {
-    state_ = state.vector;
-  }
+  void SetState(StateType state) { state_ = state.vector; }
 
   InputType Input() const { return InputType{input_}; }
 
@@ -75,3 +65,12 @@ class AffineSystemSim {
 };
 
 }  // namespace reefscape
+
+template <typename S, typename I>
+inline constexpr bool AffineSystemSim_satisfies_simulator_v =
+    reefscape::Simulator<reefscape::AffineSystemSim<S, I>, S, I>;
+
+static_assert(AffineSystemSim_satisfies_simulator_v<
+                  reefscape::PositionVelocityState, reefscape::VoltageInput>,
+              "AffineSystemSim must satisfy the Simulator concept for "
+              "PositionVelocityState/VoltageInput");

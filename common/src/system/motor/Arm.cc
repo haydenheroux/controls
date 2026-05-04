@@ -1,6 +1,4 @@
-#include "Arm.hh"
-
-#include "units.hh"
+#include "system/motor/Arm.hh"
 
 namespace reefscape {
 
@@ -37,6 +35,21 @@ quantities::Torque Arm::Torque(AngularVelocity velocity,
       (motor.resistance_ * motor.angular_velocity_constant_);
 
   return voltage_torque + back_emf_torque;
+}
+
+template <>
+TimeDerivative<AngleVelocityState>
+Arm::Dynamics<AngleVelocityState, VoltageInput>(const AngleVelocityState& x,
+                                                const VoltageInput& u) const {
+  return MakeMotorRotarySystemAdapter(*this).Dynamics(x, u);
+}
+
+template <>
+std::pair<SystemMatrix<AngleVelocityState::Dimension>,
+          InputMatrix<AngleVelocityState::Dimension, VoltageInput::Dimension>>
+Arm::Linearize<AngleVelocityState, VoltageInput>(const AngleVelocityState& x,
+                                                 const VoltageInput& u) const {
+  return MakeMotorRotarySystemAdapter(*this).Linearize(x, u);
 }
 
 }  // namespace reefscape

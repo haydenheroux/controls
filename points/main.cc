@@ -47,7 +47,7 @@ struct PointBuffer {
   std::deque<Point> points_;
   unsigned int max_points_;
 
-  PointBuffer(int max_points) : max_points_(max_points) {};
+  PointBuffer(int max_points) : max_points_(max_points);
 
   void push(Point point);
 };
