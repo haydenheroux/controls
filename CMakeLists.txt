@@ -16,6 +16,5 @@ include(Dependencies.cmake)
 setup_dependencies()
 
 add_subdirectory(common)
-add_subdirectory(optimizer)
 # add_subdirectory(points)
 add_subdirectory(reefscape)
