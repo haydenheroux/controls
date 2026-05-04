@@ -2,6 +2,7 @@
 
 #include "Eigen.hh"
 #include "au/math.hh"
+#include "state/concepts.hh"
 #include "units.hh"
 
 namespace reefscape {
@@ -127,5 +128,9 @@ static_assert(HasDimension<PositionVelocityState>,
               "PositionVelocityState must satisfy HasDimension");
 static_assert(HasDimension<PositionAccelerationState>,
               "PositionAccelerationState must satisfy HasDimension");
+
+static_assert(HasPositionVelocity<PositionVelocityState,
+                                  reefscape::units::DisplacementUnit>,
+              "AngleVelocity must satisfy HasPositionVelocity");
 
 }  // namespace reefscape

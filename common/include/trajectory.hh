@@ -1,7 +1,8 @@
 #pragma once
 
 #include "state/PositionVelocityState.hh"
-#include "system/motor/adapter.hh"
+#include "state/concepts.hh"
+#include "system/motor/MotorSystem.hh"
 #include "system/motor/concepts.hh"
 #include "units.hh"
 
@@ -26,8 +27,9 @@ struct TrapezoidTrajectory {
         max_acceleration(MaximumAcceleration<System, NativeUnit>(system)) {}
 
   // TODO(hayden): Make applicable to both rotary & linear systems
-  TrapezoidTrajectoryDurations Durations(PositionVelocityState state,
-                                         PositionVelocityState goal) {
+  template <typename State>
+    requires HasPositionVelocity<State, NativeUnit>
+  TrapezoidTrajectoryDurations Durations(State state, State goal) {
     // TODO(hayden): Verify that the calculated durations are correct
     TrapezoidTrajectoryDurations durations;
 
@@ -56,22 +58,22 @@ struct TrapezoidTrajectory {
     return durations;
   }
 
-  // TODO(hayden): Generate trajectories in NativeUnit
-  PositionVelocityState Calculate(quantities::Time time_step,
-                                  PositionVelocityState state,
-                                  PositionVelocityState goal) {
+  template <typename State>
+    requires Vector<State> && HasPositionVelocity<State, NativeUnit>
+  State Calculate(quantities::Time time_step, State state, State goal) {
     // NOTE(hayden): Algorithm assumes positive motion
     bool flip = goal.Position() < state.Position();
     if (flip) {
-      state.vector = -1 * state.vector;
-      goal.vector = -1 * goal.vector;
+      state = -1 * state;
+      goal = -1 * goal;
     }
 
     if (state.Velocity() > max_velocity) {
       state.SetVelocity(max_velocity);
     }
 
-    PositionVelocityState result{state};
+    // TODO(hayden): Ensure that `State` can be constructed from itself
+    State result{state};
 
     TrapezoidTrajectoryDurations durations = Durations(state, goal);
 
@@ -100,7 +102,7 @@ struct TrapezoidTrajectory {
     }
 
     if (flip) {
-      result = result * -1.0;
+      result = -1 * result;
     }
 
     return result;

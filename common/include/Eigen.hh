@@ -1,6 +1,7 @@
 #pragma once
 
 #include <Eigen/Core>
+#include <concepts>
 #include <unsupported/Eigen/MatrixFunctions>
 #include <utility>
 
@@ -20,6 +21,8 @@ concept SupportsVectorOperations = requires(
   { a - b } -> std::convertible_to<T>;
   { a + vec } -> std::convertible_to<T>;
   { a - vec } -> std::convertible_to<T>;
+  { scalar * a } -> std::convertible_to<T>;
+  { a * scalar } -> std::convertible_to<T>;
 };
 
 template <typename T>

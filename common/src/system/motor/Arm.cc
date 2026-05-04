@@ -9,7 +9,7 @@ AngularVelocityCoefficient Arm::VelocityCoefficient() const {
           moment_of_inertia);
 }
 
-AngularVoltageCoefficient Arm::AngularVoltageCoefficient() const {
+AngularVoltageCoefficient Arm::VoltageCoefficient() const {
   return (gear_ratio * motor.torque_constant_ * au::radians(1)) /
          (motor.resistance_ * moment_of_inertia);
 }

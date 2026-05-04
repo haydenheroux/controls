@@ -26,7 +26,7 @@ struct Arm {
 
   AngularVelocityCoefficient VelocityCoefficient() const;
 
-  quantities::AngularVoltageCoefficient AngularVoltageCoefficient() const;
+  AngularVoltageCoefficient VoltageCoefficient() const;
 
   AngularVelocity MotorVelocity(AngularVelocity velocity) const;
 

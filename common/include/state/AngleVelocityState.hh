@@ -2,6 +2,7 @@
 
 #include "Eigen.hh"
 #include "au/math.hh"
+#include "state/concepts.hh"
 #include "units.hh"
 
 namespace reefscape {
@@ -32,7 +33,7 @@ struct AngleVelocityState : public VectorBase<AngleVelocityState, 2> {
     return *this;
   }
 
-  quantities::Angle Angle() const { return au::radians(vector[0]); }
+  Angle Position() const { return au::radians(vector[0]); }
   AngularVelocity Velocity() const {
     return (au::radians / au::second)(vector[1]);
   }
@@ -42,8 +43,8 @@ struct AngleVelocityState : public VectorBase<AngleVelocityState, 2> {
     vector[1] = velocity.in(au::radians / au::second);
   }
 
-  AngleVelocityState AngleClamped(quantities::Angle min,
-                                  quantities::Angle max) const {
+  AngleVelocityState PositionClamped(quantities::Angle min,
+                                     quantities::Angle max) const {
     auto a = Angle();
     if (a > max) {
       return {max, Velocity()};
@@ -55,7 +56,7 @@ struct AngleVelocityState : public VectorBase<AngleVelocityState, 2> {
 
   bool At(const AngleVelocityState& other) const {
     bool angle_in_tolerance =
-        au::abs(Angle() - other.Angle()) < (au::milli(au::radians))(1e-3);
+        au::abs(Position() - other.Position()) < (au::milli(au::radians))(1e-3);
     bool velocity_in_tolerance = au::abs(Velocity() - other.Velocity()) <
                                  (au::milli(au::radians) / au::second)(1e-3);
     return angle_in_tolerance && velocity_in_tolerance;
@@ -124,5 +125,9 @@ static_assert(HasDimension<AngleVelocityState>,
               "AngleVelocityState must satisfy HasDimension");
 static_assert(HasDimension<AngleAccelerationState>,
               "AngleAccelerationState must satisfy HasDimension");
+
+static_assert(
+    HasPositionVelocity<AngleVelocityState, reefscape::units::AngleUnit>,
+    "AngleVelocity must satisfy HasPositionVelocity");
 
 }  // namespace reefscape

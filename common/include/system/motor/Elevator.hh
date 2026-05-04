@@ -31,7 +31,7 @@ struct Elevator {
 
   LinearVelocityCoefficient VelocityCoefficient() const;
 
-  quantities::LinearVoltageCoefficient LinearVoltageCoefficient() const;
+  LinearVoltageCoefficient VoltageCoefficient() const;
 
   AngularVelocity MotorVelocity(LinearVelocity velocity) const;
 

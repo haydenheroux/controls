@@ -9,8 +9,7 @@ LinearVelocityCoefficient Elevator::VelocityCoefficient() const {
           motor.angular_velocity_constant_);
 }
 
-quantities::LinearVoltageCoefficient Elevator::LinearVoltageCoefficient()
-    const {
+quantities::LinearVoltageCoefficient Elevator::VoltageCoefficient() const {
   return (gear_ratio * motor.torque_constant_) /
          (motor.resistance_ * mass * drum_radius);
 }

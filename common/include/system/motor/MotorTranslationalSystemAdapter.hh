@@ -33,8 +33,8 @@ template <typename MotorPlant, typename State = PositionVelocityState,
 inline InputMatrix<State::Dimension, Input::Dimension>
 MotorContinuousInputMatrix(const MotorPlant& p) {
   InputMatrix<State::Dimension, Input::Dimension> result;
-  result << 0, p.LinearVoltageCoefficient().in(
-                   (au::meters / squared(au::second)) / au::volt);
+  result << 0,
+      p.VoltageCoefficient().in((au::meters / squared(au::second)) / au::volt);
   return result;
 }
 

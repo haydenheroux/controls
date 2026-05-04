@@ -59,8 +59,8 @@ template <typename MotorPlant, typename State = AngleVelocityState,
 inline InputMatrix<State::Dimension, Input::Dimension>
 MotorContinuousInputMatrix(const MotorPlant& p) {
   InputMatrix<State::Dimension, Input::Dimension> result;
-  result << 0, p.AngularVoltageCoefficient().in(
-                   (au::radians / squared(au::second)) / au::volt);
+  result << 0,
+      p.VoltageCoefficient().in((au::radians / squared(au::second)) / au::volt);
   return result;
 }
 
@@ -79,43 +79,6 @@ inline SystemMatrix<State::Dimension> MotorContinuousSystemMatrix(
                                  (au::meters / au::second));
   return result;
 }
-
-template <typename MotorPlant>
-  requires MotorSystem<MotorPlant, decltype(units::DisplacementUnit{})>
-struct MotorSystemAdapter {
-  const MotorPlant& plant;
-
-  explicit MotorSystemAdapter(const MotorPlant& p) : plant(p) {}
-
-  SystemMatrix<PositionVelocityState::Dimension> ContinuousSystemMatrix()
-      const {
-    return MotorContinuousSystemMatrix<MotorPlant, PositionVelocityState,
-                                       VoltageInput>(plant);
-  }
-
-  InputMatrix<PositionVelocityState::Dimension, VoltageInput::Dimension>
-  ContinuousInputMatrix() const {
-    return MotorContinuousInputMatrix<MotorPlant, PositionVelocityState,
-                                      VoltageInput>(plant);
-  }
-
-  TimeDerivative<PositionVelocityState> Dynamics(const PositionVelocityState& x,
-                                                 const VoltageInput& u) const {
-    auto A = ContinuousSystemMatrix();
-    auto B = ContinuousInputMatrix();
-    StateVector<PositionVelocityState::Dimension> dx =
-        A * x.vector + B * u.vector;
-    return TimeDerivative<PositionVelocityState>{dx};
-  }
-
-  std::pair<
-      SystemMatrix<PositionVelocityState::Dimension>,
-      InputMatrix<PositionVelocityState::Dimension, VoltageInput::Dimension>>
-  Linearize(const PositionVelocityState& /*x*/,
-            const VoltageInput& /*u*/) const {
-    return std::make_pair(ContinuousSystemMatrix(), ContinuousInputMatrix());
-  }
-};
 
 template <typename MotorPlant>
   requires MotorSystem<MotorPlant, decltype(units::AngleUnit{})>

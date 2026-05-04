@@ -2,7 +2,6 @@
 
 #include <concepts>
 
-#include "Eigen.hh"
 #include "system/motor/Motor.hh"
 #include "units.hh"
 
@@ -23,7 +22,7 @@ concept RotaryMotorSystem = requires(
     system.VelocityCoefficient()
   } -> std::convertible_to<quantities::AngularVelocityCoefficient>;
   {
-    system.AngularVoltageCoefficient()
+    system.VoltageCoefficient()
   } -> std::convertible_to<quantities::AngularVoltageCoefficient>;
 };
 
@@ -42,7 +41,7 @@ concept TranslationalMotorSystem = requires(
     system.VelocityCoefficient()
   } -> std::convertible_to<quantities::LinearVelocityCoefficient>;
   {
-    system.LinearVoltageCoefficient()
+    system.VoltageCoefficient()
   } -> std::convertible_to<quantities::LinearVoltageCoefficient>;
 };
 
