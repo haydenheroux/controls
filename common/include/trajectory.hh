@@ -1,6 +1,8 @@
 #pragma once
 
-#include "system/MotorSystem.hh"
+#include "state/PositionVelocityState.hh"
+#include "system/motor/adapter.hh"
+#include "system/motor/concepts.hh"
 #include "units.hh"
 
 namespace reefscape {
@@ -23,9 +25,10 @@ struct TrapezoidTrajectory {
       : max_velocity(MaximumVelocity<System, NativeUnit>(system)),
         max_acceleration(MaximumAcceleration<System, NativeUnit>(system)) {}
 
+  // TODO(hayden): Make applicable to both rotary & linear systems
   TrapezoidTrajectoryDurations Durations(PositionVelocityState state,
                                          PositionVelocityState goal) {
-    // TODO Verify that the calculated durations are correct
+    // TODO(hayden): Verify that the calculated durations are correct
     TrapezoidTrajectoryDurations durations;
 
     auto start_time = state.Velocity() / max_acceleration;

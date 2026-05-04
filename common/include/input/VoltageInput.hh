@@ -24,4 +24,6 @@ struct VoltageInput : public VectorBase<VoltageInput, 1> {
   }
 };
 
+// TODO(hayden): Add tests
+
 };  // namespace reefscape

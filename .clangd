@@ -1,1 +1,2 @@
+# Define `compile_commands.json` directory
 CompilationDatabase: "build"

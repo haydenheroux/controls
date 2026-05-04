@@ -1,7 +1,4 @@
-#include "system/Arm.hh"
-
-#include "system/MotorSystem.hh"
-#include "units.hh"
+#include "system/motor/Arm.hh"
 
 namespace reefscape {
 
@@ -12,7 +9,7 @@ AngularVelocityCoefficient Arm::VelocityCoefficient() const {
           moment_of_inertia);
 }
 
-AngularVoltageCoefficient Arm::GetAngularVoltageCoefficient() const {
+AngularVoltageCoefficient Arm::AngularVoltageCoefficient() const {
   return (gear_ratio * motor.torque_constant_ * au::radians(1)) /
          (motor.resistance_ * moment_of_inertia);
 }
@@ -40,9 +37,6 @@ quantities::Torque Arm::Torque(AngularVelocity velocity,
   return voltage_torque + back_emf_torque;
 }
 
-// Dynamics specialization for AngleVelocityState + VoltageInput.
-// Delegate to the Arm's rotary adapter (MotorRotarySystemAdapter) to avoid
-// duplicating logic and to keep continuous-time A/B computation centralized.
 template <>
 TimeDerivative<AngleVelocityState>
 Arm::Dynamics<AngleVelocityState, VoltageInput>(const AngleVelocityState& x,
@@ -50,9 +44,6 @@ Arm::Dynamics<AngleVelocityState, VoltageInput>(const AngleVelocityState& x,
   return MakeMotorRotarySystemAdapter(*this).Dynamics(x, u);
 }
 
-// Linearize specialization: return continuous-time (A, B) at the provided
-// point. For this motor-driven arm the continuous A and B follow the canonical
-// rotary structure; the adapter provides the matrices.
 template <>
 std::pair<SystemMatrix<AngleVelocityState::Dimension>,
           InputMatrix<AngleVelocityState::Dimension, VoltageInput::Dimension>>

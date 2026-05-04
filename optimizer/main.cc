@@ -4,8 +4,8 @@
 #include "au/io.hh"
 #include "au/units/meters.hh"
 #include "robot.hh"
-#include "system/Elevator.hh"
-#include "system/MotorSystem.hh"
+#include "system/motor/Elevator.hh"
+#include "system/motor/adapter.hh"
 #include "trajectory.hh"
 #include "units.hh"
 

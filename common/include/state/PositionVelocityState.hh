@@ -8,16 +8,6 @@ namespace reefscape {
 
 using namespace quantities;
 
-/*
- * Position + linear velocity state wrapper.
- *
- * Vector layout (canonical):
- *   vector[0] = position (meters)
- *   vector[1] = velocity (meters / second)
- *
- * This type is intended to be the canonical 2-state translational state used
- * across the codebase.
- */
 struct PositionVelocityState : public VectorBase<PositionVelocityState, 2> {
   StateVector<Dimension> vector;
 
@@ -74,16 +64,6 @@ struct PositionVelocityState : public VectorBase<PositionVelocityState, 2> {
   }
 };
 
-/*
- * Position-acceleration wrapper type (canonical time-derivative for
- * PositionVelocityState).
- *
- * Vector layout:
- *   vector[0] = velocity (m/s)
- *   vector[1] = acceleration (m/s^2)
- *
- * This type is intended to represent xdot for a translational 2-state.
- */
 struct PositionAccelerationState
     : public VectorBase<PositionAccelerationState, 2> {
   StateVector<Dimension> vector;
@@ -128,15 +108,6 @@ struct PositionAccelerationState
   }
 };
 
-/*
- * Trait specialization: map PositionVelocityState -> PositionAccelerationState
- * for canonical TimeDerivative usage.
- *
- * The primary trait `TimeDerivativeOf<State>` is declared in `Eigen.hh`.
- * Here we provide the concrete mapping so
- * `TimeDerivative<PositionVelocityState>` resolves to
- * `PositionAccelerationState`.
- */
 template <>
 struct TimeDerivativeOf<PositionVelocityState> {
   using type = PositionAccelerationState;

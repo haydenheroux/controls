@@ -1,8 +1,9 @@
 #pragma once
 
 #include "Eigen.hh"
-#include "Motor.hh"
-#include "system/MotorSystem.hh"
+#include "state/PositionVelocityState.hh"
+#include "system/motor/Motor.hh"
+#include "system/motor/MotorTranslationalSystemAdapter.hh"
 #include "units.hh"
 
 namespace reefscape {
@@ -30,7 +31,7 @@ struct Elevator {
 
   LinearVelocityCoefficient VelocityCoefficient() const;
 
-  quantities::LinearVoltageCoefficient GetLinearVoltageCoefficient() const;
+  quantities::LinearVoltageCoefficient LinearVoltageCoefficient() const;
 
   AngularVelocity MotorVelocity(LinearVelocity velocity) const;
 
@@ -44,26 +45,16 @@ struct Elevator {
 
   quantities::Force Force(LinearVelocity velocity, Voltage voltage) const;
 
-  // Dynamics API to satisfy the System concept:
-  // xdot = Dynamics(x, u)
-  // State and Input are intentionally templated to match the project's
-  // VectorBase-derived wrappers (e.g., PositionVelocityState, VoltageInput).
   template <class State, class Input>
     requires HasDimension<State> && HasDimension<Input>
   TimeDerivative<State> Dynamics(const State& x, const Input& u) const;
 
-  // Continuous-time linearization (optional capability)
-  // Returns (A, B) continuous-time Jacobians at (x, u).
   template <class State, class Input>
     requires HasDimension<State> && HasDimension<Input>
   std::pair<SystemMatrix<State::Dimension>,
             InputMatrix<State::Dimension, Input::Dimension>>
   Linearize(const State& x, const Input& u) const;
 
-  // TODO(hayden): Move to a different class
-  // Default implementation now delegates to the generic MotorContinuous
-  // helpers. This avoids duplicating the canonical motor-driven A/B
-  // construction across multiple motor-like plants.
   template <class State>
     requires HasDimension<State>
   SystemMatrix<State::Dimension> ContinuousSystemMatrix() const {

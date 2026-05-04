@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Eigen.hh"
-#include "input.hh"
+#include "input/VoltageInput.hh"
 #include "simulator/concepts.hh"
 #include "state/PositionVelocityState.hh"
 #include "units.hh"
@@ -11,8 +11,7 @@ namespace reefscape {
 using namespace quantities;
 
 template <class StateType, class InputType>
-  requires SupportsVectorOperations<StateType> &&
-           SupportsVectorOperations<InputType>
+  requires Vector<StateType> && Vector<InputType>
 class AffineSystemSim {
   static constexpr int States = StateType::Dimension;
   static constexpr int Inputs = InputType::Dimension;
@@ -20,10 +19,10 @@ class AffineSystemSim {
  public:
   AffineSystemSim(SystemMatrix<States> continuous_system,
                   InputMatrix<States, Inputs> continuous_input,
-                  StateVector<States> continuous_constant, Time time_step)
+                  Dot<StateType> continuous_constant, Time time_step)
       : continuous_system_(continuous_system),
         continuous_input_(continuous_input),
-        continuous_constant_(continuous_constant),
+        continuous_constant_(continuous_constant.vector),
         state_(),
         input_() {
     auto continuous_matrices =

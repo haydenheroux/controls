@@ -1,4 +1,3 @@
-// controls/common/include/state/AngleVelocityState.hh
 #pragma once
 
 #include "Eigen.hh"
@@ -9,16 +8,6 @@ namespace reefscape {
 
 using namespace quantities;
 
-/*
- * Angle + angular velocity state wrapper for rotary joints / arms.
- *
- * Vector layout (canonical):
- *   vector[0] = angle (radians)
- *   vector[1] = angular velocity (radians / second)
- *
- * This type is intended to be the canonical 2-state rotary state used across
- * the codebase.
- */
 struct AngleVelocityState : public VectorBase<AngleVelocityState, 2> {
   StateVector<Dimension> vector;
 
@@ -73,16 +62,6 @@ struct AngleVelocityState : public VectorBase<AngleVelocityState, 2> {
   }
 };
 
-/*
- * Angle-acceleration wrapper type (canonical time-derivative for
- * AngleVelocityState).
- *
- * Vector layout:
- *   vector[0] = angular velocity (rad/s)
- *   vector[1] = angular acceleration (rad/s^2)
- *
- * This type is intended to represent xdot for a rotary 2-state.
- */
 struct AngleAccelerationState : public VectorBase<AngleAccelerationState, 2> {
   StateVector<Dimension> vector;
 
@@ -126,14 +105,6 @@ struct AngleAccelerationState : public VectorBase<AngleAccelerationState, 2> {
   }
 };
 
-/*
- * Trait specialization: map AngleVelocityState -> AngleAccelerationState
- * for canonical TimeDerivative usage.
- *
- * The primary trait `TimeDerivativeOf<State>` is declared in `Eigen.hh`.
- * Here we provide the concrete mapping so `TimeDerivative<AngleVelocityState>`
- * resolves to `AngleAccelerationState`.
- */
 template <>
 struct TimeDerivativeOf<AngleVelocityState> {
   using type = AngleAccelerationState;

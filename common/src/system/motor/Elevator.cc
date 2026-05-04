@@ -1,8 +1,4 @@
-#include "system/Elevator.hh"
-
-#include "input.hh"
-#include "system/MotorSystem.hh"
-#include "units.hh"
+#include "system/motor/Elevator.hh"
 
 namespace reefscape {
 
@@ -13,7 +9,7 @@ LinearVelocityCoefficient Elevator::VelocityCoefficient() const {
           motor.angular_velocity_constant_);
 }
 
-quantities::LinearVoltageCoefficient Elevator::GetLinearVoltageCoefficient()
+quantities::LinearVoltageCoefficient Elevator::LinearVoltageCoefficient()
     const {
   return (gear_ratio * motor.torque_constant_) /
          (motor.resistance_ * mass * drum_radius);
@@ -53,27 +49,6 @@ quantities::Force Elevator::Force(LinearVelocity velocity,
   return voltage_force + back_emf_force;
 }
 
-/* ContinuousSystemMatrix specialization removed.
- * Continuous A/B construction for motor-driven plants is now provided by
- * the generic helper `MotorContinuousSystemMatrix` in
- * `controls/common/include/system/MotorSystem.hh`.
- *
- * The Elevator class delegates to that helper via its header-level
- * `ContinuousSystemMatrix()` inline method, so the explicit specialization
- * in this translation unit is no longer necessary.
- */
-
-/* ContinuousInputMatrix specialization removed.
- * See `MotorContinuousInputMatrix` in
- * `controls/common/include/system/MotorSystem.hh` for the canonical B matrix
- * computation. Elevator now delegates to that helper via its header-level
- * `ContinuousInputMatrix()` inline method.
- */
-
-// Dynamics specialization for PositionVelocityState + VoltageInput.
-// Return the canonical time-derivative wrapper (xdot) for the
-// PositionVelocityState. Delegate to the MotorSystemAdapter (stored lazily) to
-// avoid duplicating logic and to avoid re-creating the adapter on every call.
 template <>
 TimeDerivative<PositionVelocityState>
 Elevator::Dynamics<PositionVelocityState, VoltageInput>(
@@ -81,10 +56,6 @@ Elevator::Dynamics<PositionVelocityState, VoltageInput>(
   return MakeMotorTranslationalSystemAdapter(*this).Dynamics(x, u);
 }
 
-// Linearize specialization: return continuous-time (A, B) at the provided
-// point. For this (simple) motor-driven elevator the continuous A and B are
-// independent of the state and input, so we can reuse the existing
-// ContinuousSystem/ContinuousInput.
 template <>
 std::pair<
     SystemMatrix<PositionVelocityState::Dimension>,

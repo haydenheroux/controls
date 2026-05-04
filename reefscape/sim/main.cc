@@ -4,11 +4,11 @@
 #include "au/power_aliases.hh"
 #include "au/units/seconds.hh"
 #include "au/units/volts.hh"
-#include "input.hh"
+#include "input/VoltageInput.hh"
 #include "pubsub/zmq.hh"
 #include "robot.hh"
 #include "simulator/AffineSystemSim.hh"
-#include "system/Elevator.hh"
+#include "system/motor/Elevator.hh"
 #include "trajectory.hh"
 #include "units.hh"
 
@@ -28,14 +28,8 @@ int main() {
   auto A = elevator.ContinuousSystemMatrix<State>();
   auto B = elevator.ContinuousInputMatrix<State, Input>();
 
-  // Gravity should be expressed as a time-derivative (xdot) not as a `State`.
-  // Construct the continuous constant term as [0; g] where g is the
-  // gravitational acceleration (affects the velocity derivative only).
-  auto gravity_acc = (au::meters / au::squared(au::seconds))(
-      kGravity.in(au::meters / au::squared(au::seconds)));
-  StateVector<State::Dimension> gravity_dot;
-  gravity_dot << 0.0, gravity_acc.in(au::meters / au::squared(au::seconds));
-  AffineSystemSim<State, Input> sim{A, B, gravity_dot, kTimeStep};
+  Dot<State> gravity{(au::meters / au::second)(0.0), kGravity};
+  AffineSystemSim<State, Input> sim{A, B, gravity, kTimeStep};
 
   // TODO(hayden): Implement LQR for a given system to find the optimal K
   auto kP = (au::volts / au::meter)(191.2215);
@@ -43,8 +37,7 @@ int main() {
   Eigen::Matrix<double, State::Dimension, 1> gains;
   gains << kP.in(au::volts / au::meter),
       kD.in(au::volts / (au::meters / au::second));
-  auto K = MakeGainMatrix<Input::Dimension, State::Dimension, State::Dimension>(
-      gains);
+  auto K = MakeGainMatrix<Input::Dimension, State::Dimension>(gains);
 
   State top{TOTAL_TRAVEL};
   State bottom{au::meters(0)};
