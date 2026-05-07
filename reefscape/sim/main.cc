@@ -84,6 +84,6 @@ int main() {
         sim.State().PositionClamped(au::meters(0), elevator.max_travel);
     sim.SetState(clamped_state);
 
-    publisher.Publish(Timing{loop.TotalTime(), loop.LastTickTime()}, sim.State());
+    publisher.Publish(loop.Timing(), sim.State());
   });
 }
