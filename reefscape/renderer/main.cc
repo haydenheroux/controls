@@ -25,7 +25,12 @@ int main() {
     auto elapsed_time = au::seconds(GetFrameTime());
     camera.position = SpinZ(camera.position, camera_omega * elapsed_time);
 
-    auto [sim_time, state] = subscriber.Subscribe();
+    auto result = subscriber.Subscribe();
+    if (!result.has_value()) {
+      continue;
+    }
+
+    auto [timing, state] = result.value();
 
     Render(camera, state.Position());
     writer.Reset();
@@ -34,8 +39,10 @@ int main() {
     writer.Write("Velocity: " +
                  std::to_string(state.Velocity().in(au::meters / au::second)) +
                  "m/s");
+    writer.Write("Total Time: " +
+                 std::to_string(timing.time.in(au::seconds)) + "s");
     writer.Write("Sim Time: " +
-                 std::to_string(sim_time.in(au::micro(au::seconds))) + "us");
+                 std::to_string(timing.delta_time.in(au::micro(au::seconds))) + "us");
     writer.Write("Draw Time: " +
                  std::to_string(elapsed_time.in(au::milli(au::seconds))) +
                  "ms");
