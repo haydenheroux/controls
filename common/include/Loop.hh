@@ -3,6 +3,7 @@
 #include <chrono>
 #include <thread>
 
+#include "pubsub/metadata.hh"
 #include "units.hh"
 
 namespace reefscape {
@@ -43,6 +44,8 @@ class Loop {
   quantities::Time TotalTime() const { return total_time_; }
 
   quantities::Time LastTickTime() const { return last_tick_runtime_; }
+
+  reefscape::Timing Timing() const { return { total_time_, last_tick_runtime_ }; }
 
   bool Overran() const { return last_tick_runtime_ > time_step_; }
 };

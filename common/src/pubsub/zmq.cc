@@ -1,9 +1,11 @@
 #include "pubsub/zmq.hh"
 
+#include <optional>
 #include <utility>
 #include <zmq.hpp>
 
 #include "au/prefix.hh"
+#include "pubsub/metadata.hh"
 #include "units.hh"
 
 namespace reefscape {
@@ -14,11 +16,13 @@ ZMQPublisher::ZMQPublisher(const std::string& endpoint) {
   socket.bind(endpoint);
 }
 
-void ZMQPublisher::Publish(Time time, PositionVelocityState state) {
-  double time_us = time.in(au::micro(au::seconds));
+void ZMQPublisher::Publish(Timing time, PositionVelocityState state) {
+  double time_us = time.time.in(au::micro(au::seconds));
+  double delta_time_us = time.delta_time.in(au::micro(au::seconds));
   double position_m = state.Position().in(au::meters);
   double velocity_mps = state.Velocity().in((au::meters / au::seconds));
-  socket.send(zmq::buffer({time_us, position_m, velocity_mps}),
+
+  socket.send(zmq::buffer({time_us, delta_time_us, position_m, velocity_mps}),
               zmq::send_flags::none);
 }
 
@@ -28,21 +32,22 @@ ZMQSubscriber::ZMQSubscriber(const std::string& endpoint)
   socket.set(zmq::sockopt::subscribe, "");
 }
 
-std::pair<Time, PositionVelocityState> ZMQSubscriber::Subscribe() {
+std::optional<std::pair<Timing, PositionVelocityState>> ZMQSubscriber::Subscribe() {
   zmq::message_t message;
   zmq::recv_result_t result = socket.recv(message, zmq::recv_flags::none);
   bool none = !result.has_value();
-  bool incorrectSize = message.size() != 3 * sizeof(double);
+  bool incorrectSize = message.size() != 4 * sizeof(double);
   if (none || incorrectSize) {
-    auto zero = (au::micro(au::seconds))(0);
-    return std::make_pair(zero, PositionVelocityState{});
+    return std::nullopt;
   }
   const double* data = static_cast<const double*>(message.data());
 
   auto time = (au::micro(au::seconds))(data[0]);
-  auto state = PositionVelocityState{au::meters(data[1]),
-                                     (au::meters / au::second)(data[2])};
-  return std::make_pair(time, state);
+  auto delta_time = (au::micro(au::seconds))(data[1]);
+  Timing timing{time, delta_time};
+  auto state = PositionVelocityState{au::meters(data[2]),
+                                     (au::meters / au::second)(data[3])};
+  return std::make_optional(std::make_pair(timing, state));
 }
 
 };  // namespace reefscape

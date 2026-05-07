@@ -1,8 +1,11 @@
 #pragma once
 
+#include <optional>
+
 #include <zmq.hpp>
 
 #include "pubsub/concepts.hh"
+#include "pubsub/metadata.hh"
 #include "state/PositionVelocityState.hh"
 
 namespace reefscape {
@@ -13,7 +16,7 @@ struct ZMQPublisher {
 
   ZMQPublisher(const std::string& endpoint);
 
-  void Publish(Time time, PositionVelocityState state);
+  void Publish(Timing timing, PositionVelocityState state);
 };
 
 template <>
@@ -27,7 +30,7 @@ struct ZMQSubscriber {
 
   ZMQSubscriber(const std::string& endpoint);
 
-  std::pair<Time, PositionVelocityState> Subscribe();
+  std::optional<std::pair<Timing, PositionVelocityState>> Subscribe();
 };
 
 template <>
@@ -35,10 +38,10 @@ inline ZMQSubscriber GetSubscriber<ZMQSubscriber>() {
   return ZMQSubscriber{"ipc:///tmp/zmq.ipc"};
 }
 
-static_assert(Publisher<ZMQPublisher, PositionVelocityState>,
+static_assert(Publisher<ZMQPublisher, Timing, PositionVelocityState>,
               "ZMQPublisher must satisfy the Publisher concept for "
               "PositionVelocityState");
-static_assert(Subscriber<ZMQSubscriber, PositionVelocityState>,
+static_assert(Subscriber<ZMQSubscriber, Timing, PositionVelocityState>,
               "ZMQSubscriber must satisfy the Subscriber concept for "
               "PositionVelocityState");
 
