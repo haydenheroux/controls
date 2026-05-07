@@ -12,17 +12,19 @@ int main() {
     std::ofstream file;
     file.open(name + ".csv");
 
-    file << "time (s),position (m),velocity (m/s)\n";
+    file << "time (ms),position (m),velocity (m/s)\n";
 
-    auto time = au::seconds(0.0);
     while (true) {
-        auto [dt, state] = subscriber.Subscribe();
+      auto result = subscriber.Subscribe();
+      if (!result.has_value()) {
+        continue;
+      }
 
-        file << time.in(au::seconds) << ",";
-        file << state.Position().in(au::meters) << ",";
-        file << state.Velocity().in(au::meters / au::second) << "\n";
+      auto [timing, state] = result.value();
 
-        time += dt;
+      file << timing.time.in(au::milli(au::seconds)) << ",";
+      file << state.Position().in(au::meters) << ",";
+      file << state.Velocity().in(au::meters / au::second) << "\n";
     }
 
     file.close();
