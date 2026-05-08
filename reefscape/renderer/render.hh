@@ -1,6 +1,7 @@
 #pragma once
 
 #include "raylib.h"
+#include "robot.hh"
 #include "units.hh"
 
 namespace reefscape {
@@ -33,7 +34,9 @@ Vector3 SpinZ(const Vector3& position, Angle angle);
 
 struct TextWriter {
   unsigned int line_number = 0;
-  unsigned int font_size = 10;
+  unsigned int font_size = kFontSize.in(pixels);
+  unsigned int gap = kTextPadding.in(pixels);
+  unsigned int padding = kTextPadding.in(pixels);
   Color color = BLACK;
 
   void Reset() { line_number = 0; };

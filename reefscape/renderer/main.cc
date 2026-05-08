@@ -6,14 +6,14 @@
 #include "pubsub/zmq.hh"
 #include "raylib.h"
 #include "render.hh"
-#include "render_units.hh"
+#include "robot.hh"
 
 using namespace reefscape;
 
 int main() {
   auto subscriber = GetSubscriber<ZMQSubscriber>("elevator");
 
-  Init({pixels(360.0), pixels(640.0), "Reefscape Elevator Simulator", 60});
+  Init({kWindowWidth, kWindowHeight, "Reefscape Elevator Simulator", 60});
 
   auto camera_omega = (au::degrees / au::second)(12.0);
 
@@ -34,6 +34,8 @@ int main() {
 
     auto data = result.value();
 
+    BeginDrawing();
+    ClearBackground(WHITE);
     Render(camera, data.state.Position(), data.goal.Position(),
            data.reference.Position());
     writer.Reset();
@@ -60,6 +62,7 @@ int main() {
                  std::to_string(elapsed_time.in(au::milli(au::seconds))) +
                  "ms");
     writer.Write("Comms: ZMQ");
+    EndDrawing();
   }
 
   CloseWindow();
