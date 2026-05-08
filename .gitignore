@@ -4,3 +4,5 @@ CMakeCache.txt
 compile_commands.json
 .cache/
 .vs
+*.csv
+.clangd
