@@ -1,3 +1,5 @@
+#include <string>
+
 #include "au/prefix.hh"
 #include "au/units/degrees.hh"
 #include "au/units/inches.hh"
@@ -25,20 +27,24 @@ int main() {
     auto elapsed_time = au::seconds(GetFrameTime());
     camera.position = SpinZ(camera.position, camera_omega * elapsed_time);
 
-    auto result = subscriber.Subscribe();
+    auto result =
+        subscriber.Subscribe<std::pair<PositionVelocityState, VoltageInput>>();
     if (!result.has_value()) {
       continue;
     }
 
-    auto [timing, state] = result.value();
+    auto [timing, data] = result.value();
 
-    Render(camera, state.Position());
+    Render(camera, data.first.Position());
     writer.Reset();
+    writer.Write("Position: " +
+                 std::to_string(data.first.Position().in(au::meters)) + "m");
     writer.Write(
-        "Position: " + std::to_string(state.Position().in(au::meters)) + "m");
-    writer.Write("Velocity: " +
-                 std::to_string(state.Velocity().in(au::meters / au::second)) +
-                 "m/s");
+        "Velocity: " +
+        std::to_string(data.first.Velocity().in(au::meters / au::second)) +
+        "m/s");
+    writer.Write("Voltage: " +
+                 std::to_string(data.second.Voltage().in(au::volts)) + "V");
     writer.Write("Total Time: " +
                  std::to_string(timing.time.in(au::seconds)) + "s");
     writer.Write("Sim Time: " +
