@@ -25,7 +25,9 @@ struct UnitVector3 {
 Camera InitCamera(const UnitVector3& position, const UnitVector3& target,
                   Angle fov);
 
-void Render(const Camera& camera, Displacement elevator_position);
+void Render(const Camera& camera, Displacement elevator_position,
+            Displacement goal_position = au::meters(0),
+            Displacement reference_position = au::meters(0));
 
 Vector3 SpinZ(const Vector3& position, Angle angle);
 

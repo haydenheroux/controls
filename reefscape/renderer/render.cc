@@ -250,7 +250,8 @@ void DrawRobot(Displacement elevator_position) {
   DrawCarriage(carriage_origin);
 }
 
-void Render(const Camera& camera, Displacement elevator_position) {
+void Render(const Camera& camera, Displacement elevator_position,
+            Displacement goal_position, Displacement reference_position) {
   BeginDrawing();
   ClearBackground(WHITE);
   BeginMode3D(camera);

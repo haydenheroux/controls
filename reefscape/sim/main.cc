@@ -5,6 +5,7 @@
 #include "au/units/seconds.hh"
 #include "au/units/volts.hh"
 #include "input/VoltageInput.hh"
+#include "pubsub/codecs.hh"
 #include "pubsub/zmq.hh"
 #include "robot.hh"
 #include "simulator/AffineSystemSim.hh"
@@ -23,7 +24,7 @@ int main() {
   const auto kTimeStep = au::milli(au::seconds)(16.67);
   Loop loop{kTimeStep};
 
-  auto publisher = GetPublisher<ZMQPublisher>();
+  auto publisher = GetPublisher<ZMQPublisher>("elevator");
 
   auto A = elevator.ContinuousSystemMatrix<State>();
   auto B = elevator.ContinuousInputMatrix<State, Input>();
@@ -84,6 +85,7 @@ int main() {
         sim.State().PositionClamped(au::meters(0), elevator.max_travel);
     sim.SetState(clamped_state);
 
-    publisher.Publish(loop.Timing(), std::make_pair(sim.State(), sim.Input()));
+    publisher.Publish(TimedStateAndGoalAndReferenceAndInput{
+        loop.Timing(), sim.State(), goal, reference, sim.Input()});
   });
 }
