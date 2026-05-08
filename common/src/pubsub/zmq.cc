@@ -26,28 +26,24 @@ void ZMQPublisher::Publish(Timing time, PositionVelocityState state) {
               zmq::send_flags::none);
 }
 
+void ZMQPublisher::Publish(
+    Timing time, std::pair<PositionVelocityState, VoltageInput> stateAndInput) {
+  double time_us = time.time.in(au::micro(au::seconds));
+  double delta_time_us = time.delta_time.in(au::micro(au::seconds));
+  double position_m = stateAndInput.first.Position().in(au::meters);
+  double velocity_mps =
+      stateAndInput.first.Velocity().in(au::meters / au::second);
+  double voltage = stateAndInput.second.Voltage().in(au::volts);
+
+  socket.send(
+      zmq::buffer({time_us, delta_time_us, position_m, velocity_mps, voltage}),
+      zmq::send_flags::none);
+}
+
 ZMQSubscriber::ZMQSubscriber(const std::string& endpoint)
     : context(1), socket(context, zmq::socket_type::sub) {
   socket.connect(endpoint);
   socket.set(zmq::sockopt::subscribe, "");
 }
 
-std::optional<std::pair<Timing, PositionVelocityState>> ZMQSubscriber::Subscribe() {
-  zmq::message_t message;
-  zmq::recv_result_t result = socket.recv(message, zmq::recv_flags::none);
-  bool none = !result.has_value();
-  bool incorrectSize = message.size() != 4 * sizeof(double);
-  if (none || incorrectSize) {
-    return std::nullopt;
-  }
-  const double* data = static_cast<const double*>(message.data());
-
-  auto time = (au::micro(au::seconds))(data[0]);
-  auto delta_time = (au::micro(au::seconds))(data[1]);
-  Timing timing{time, delta_time};
-  auto state = PositionVelocityState{au::meters(data[2]),
-                                     (au::meters / au::second)(data[3])};
-  return std::make_optional(std::make_pair(timing, state));
-}
-
-};  // namespace reefscape
+}  // namespace reefscape

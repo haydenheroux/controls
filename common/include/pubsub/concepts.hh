@@ -1,7 +1,7 @@
 #pragma once
 
 #include <concepts>
-#include <utility>
+#include <optional>
 
 namespace reefscape {
 
@@ -16,7 +16,9 @@ P GetPublisher();
 
 template <typename S, typename M, typename D>
 concept Subscriber = requires(S& subscriber) {
-  { subscriber.Subscribe() } -> std::same_as<std::optional<std::pair<M,D>>>;
+  {
+    subscriber.template Subscribe<D>()
+  } -> std::same_as<std::optional<std::pair<M, D>>>;
 };
 
 template <typename S>

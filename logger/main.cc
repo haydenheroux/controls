@@ -1,8 +1,10 @@
 #include <chrono>
 #include <fstream>
 
-#include "pubsub/zmq.hh"
 #include "au/units/seconds.hh"
+#include "input/VoltageInput.hh"
+#include "pubsub/zmq.hh"
+#include "state/PositionVelocityState.hh"
 
 int main() {
     auto subscriber = reefscape::GetSubscriber<reefscape::ZMQSubscriber>();
@@ -12,19 +14,22 @@ int main() {
     std::ofstream file;
     file.open(name + ".csv");
 
-    file << "time (ms),position (m),velocity (m/s)\n";
+    file << "time (ms),position (m),velocity (m/s),voltage (V)\n";
 
     while (true) {
-      auto result = subscriber.Subscribe();
+      auto result =
+          subscriber.Subscribe<std::pair<reefscape::PositionVelocityState,
+                                         reefscape::VoltageInput>>();
       if (!result.has_value()) {
         continue;
       }
 
-      auto [timing, state] = result.value();
+      auto [timing, data] = result.value();
 
       file << timing.time.in(au::milli(au::seconds)) << ",";
-      file << state.Position().in(au::meters) << ",";
-      file << state.Velocity().in(au::meters / au::second) << "\n";
+      file << data.first.Position().in(au::meters) << ",";
+      file << data.first.Velocity().in(au::meters / au::second) << ",";
+      file << data.second.Voltage().in(au::volts) << "\n";
     }
 
     file.close();
