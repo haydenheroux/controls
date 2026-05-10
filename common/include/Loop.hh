@@ -8,6 +8,11 @@
 
 namespace reefscape {
 
+struct Timing {
+  quantities::Time time;
+  quantities::Time delta_time;
+};
+
 class Loop {
   quantities::Time time_step_;
   std::chrono::microseconds time_step_microseconds_;

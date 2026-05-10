@@ -1,86 +1,85 @@
 #pragma once
 
 #include <optional>
+#include <string_view>
 #include <zmq.hpp>
 
-#include "input/VoltageInput.hh"
+#include "pubsub/codec.hh"
+#include "pubsub/codecs.hh"
 #include "pubsub/concepts.hh"
-#include "pubsub/metadata.hh"
-#include "state/PositionVelocityState.hh"
 
 namespace reefscape {
+
+inline std::string FormatZMQEndpoint(std::string_view key) {
+  auto path = std::format("/tmp/{}-zmq.ipc", key);
+  std::remove(path.c_str());
+  return std::format("ipc://{}", path);
+}
 
 struct ZMQPublisher {
   zmq::context_t context;
   zmq::socket_t socket;
 
-  ZMQPublisher(const std::string& endpoint);
+  ZMQPublisher(std::string_view endpoint);
 
-  void Publish(Timing timing, PositionVelocityState state);
-  void Publish(Timing timing,
-               std::pair<PositionVelocityState, VoltageInput> stateAndInput);
+  template <HasCodec T>
+  auto Publish(const T& value) {
+    auto encoded = Codec<T>::Encode(value);
+    return socket.send(
+        zmq::buffer(encoded.data(), encoded.size() * sizeof(double)),
+        zmq::send_flags::none);
+  }
 };
 
-template <>
-inline ZMQPublisher GetPublisher<ZMQPublisher>() {
-  return ZMQPublisher{"ipc:///tmp/zmq.ipc"};
+template <typename P>
+  requires std::same_as<P, ZMQPublisher>
+inline P GetPublisher(std::string_view key) {
+  return ZMQPublisher{FormatZMQEndpoint(key)};
 }
 
 struct ZMQSubscriber {
   zmq::context_t context;
   zmq::socket_t socket;
 
-  ZMQSubscriber(const std::string& endpoint);
+  ZMQSubscriber(std::string_view endpoint);
 
-  template <typename T = PositionVelocityState>
-  std::optional<std::pair<Timing, T>> Subscribe() {
-    constexpr bool hasInput =
-        std::is_same_v<T, std::pair<PositionVelocityState, VoltageInput>>;
-    constexpr size_t kNumDoubles = hasInput ? 5 : 4;
-
+  template <HasCodec T>
+  std::optional<T> Subscribe() {
     zmq::message_t message;
-    zmq::recv_result_t result = socket.recv(message, zmq::recv_flags::none);
-    if (!result.has_value() || message.size() != kNumDoubles * sizeof(double)) {
+    auto result = socket.recv(message, zmq::recv_flags::none);
+    if (!result) {
       return std::nullopt;
     }
-    const double* data = static_cast<const double*>(message.data());
 
-    auto time = (au::micro(au::seconds))(data[0]);
-    auto delta_time = (au::micro(au::seconds))(data[1]);
-    Timing timing{time, delta_time};
-
-    if constexpr (hasInput) {
-      auto state = PositionVelocityState{au::meters(data[2]),
-                                         (au::meters / au::second)(data[3])};
-      auto input = VoltageInput{au::volts(data[4])};
-      return std::make_optional(
-          std::make_pair(timing, std::make_pair(state, input)));
-    } else {
-      auto state = PositionVelocityState{au::meters(data[2]),
-                                         (au::meters / au::second)(data[3])};
-      return std::make_optional(std::make_pair(timing, state));
+    if (message.size() != Codec<T>::kNumDoubles * sizeof(double)) {
+      return std::nullopt;
     }
+
+    return Codec<T>::Decode(static_cast<const double*>(message.data()),
+                            message.size());
   }
 };
 
-template <>
-inline ZMQSubscriber GetSubscriber<ZMQSubscriber>() {
-  return ZMQSubscriber{"ipc:///tmp/zmq.ipc"};
+template <typename S>
+  requires std::same_as<S, ZMQSubscriber>
+inline S GetSubscriber(std::string_view key) {
+  return ZMQSubscriber{FormatZMQEndpoint(key)};
 }
 
-static_assert(Publisher<ZMQPublisher, Timing, PositionVelocityState>,
-              "ZMQPublisher must satisfy the Publisher concept for "
-              "PositionVelocityState");
-static_assert(Subscriber<ZMQSubscriber, Timing, PositionVelocityState>,
-              "ZMQSubscriber must satisfy the Subscriber concept for "
-              "PositionVelocityState");
-static_assert(Publisher<ZMQPublisher, Timing,
-                        std::pair<PositionVelocityState, VoltageInput>>,
-              "ZMQPublisher must satisfy the Publisher concept for "
-              "PositionVelocityState and VoltageInput");
-static_assert(Subscriber<ZMQSubscriber, Timing,
-                         std::pair<PositionVelocityState, VoltageInput>>,
-              "ZMQSubscriber must satisfy the Subscriber concept for "
-              "PositionVelocityState and VoltageInput");
+static_assert(Publisher<ZMQPublisher, Timing>);
+static_assert(Publisher<ZMQPublisher, PositionVelocityState>);
+static_assert(Publisher<ZMQPublisher, VoltageInput>);
+static_assert(Publisher<ZMQPublisher, StateAndInput>);
+static_assert(Publisher<ZMQPublisher, TimedStateAndInput>);
+static_assert(Publisher<ZMQPublisher, TimedStateAndGoalAndInput>);
+static_assert(Publisher<ZMQPublisher, TimedStateAndGoalAndReferenceAndInput>);
 
-};  // namespace reefscape
+static_assert(Subscriber<ZMQSubscriber, Timing>);
+static_assert(Subscriber<ZMQSubscriber, PositionVelocityState>);
+static_assert(Subscriber<ZMQSubscriber, VoltageInput>);
+static_assert(Subscriber<ZMQSubscriber, StateAndInput>);
+static_assert(Subscriber<ZMQSubscriber, TimedStateAndInput>);
+static_assert(Subscriber<ZMQSubscriber, TimedStateAndGoalAndInput>);
+static_assert(Subscriber<ZMQSubscriber, TimedStateAndGoalAndReferenceAndInput>);
+
+}  // namespace reefscape

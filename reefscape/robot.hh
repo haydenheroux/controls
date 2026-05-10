@@ -2,15 +2,30 @@
 
 #include <string_view>
 
+#include "au/fwd.hh"
 #include "au/math.hh"
 #include "au/units/inches.hh"
 #include "au/units/pounds_mass.hh"
+#include "raylib.h"
+#include "renderer/render_units.hh"
 #include "system/motor/Motor.hh"
 #include "units.hh"
 
 namespace reefscape {
 
 using namespace quantities;
+
+const Color k5112Green = {0, 167, 74, 255};
+const Color k5112GreenShadow = {0, 148, 91, 255};
+
+const Color kGoalColor = {200, 100, 0, 128};
+const Color kReferenceColor = {200, 200, 0, 128};
+
+constexpr au::QuantityD<Pixels> kWindowWidth = pixels(719.0);
+constexpr au::QuantityD<Pixels> kWindowHeight = pixels(1280.0);
+constexpr double kFontSizeRatio = 12.0 / 360.0;
+constexpr au::QuantityD<Pixels> kFontSize = kWindowWidth * kFontSizeRatio;
+constexpr au::QuantityD<Pixels> kTextPadding = kWindowWidth * 4.0 / 360.0;
 
 // TODO(hayden): I don't like the 'k' prefix for constants
 
